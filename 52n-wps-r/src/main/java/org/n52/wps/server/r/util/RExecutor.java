@@ -98,6 +98,7 @@ public class RExecutor {
 
         // reading script:
         StringBuilder scriptExecutionString = new StringBuilder();
+        scriptExecutionString.append("# WPS4R.beginOfExecutionString\n");
 
         // surrounds R script with try / catch block in R
         scriptExecutionString.append("error = try({ \n");
@@ -170,6 +171,7 @@ public class RExecutor {
         scriptExecutionString.append(RWPSSessionVariables.ERROR_MESSAGE);
         scriptExecutionString.append(" <- as.character(error)");
         scriptExecutionString.append("\n");
+        scriptExecutionString.append("# WPS4R.endOfExecutionString\n");
 
         if (this.debugScript && log.isDebugEnabled())
             log.debug(scriptExecutionString.toString());
