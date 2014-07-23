@@ -146,12 +146,12 @@
 			<artifactId>52n-wps-commons</artifactId>
 		</dependency>
 		<dependency>
-			<groupId>org.rosuda</groupId>
+			<groupId>org.nuiton.thirdparty</groupId>
 			<artifactId>REngine</artifactId>
 		</dependency>
 		<dependency>
-			<groupId>org.rosuda</groupId>
-			<artifactId>RserveEngine</artifactId>
+			<groupId>org.nuiton.thirdparty</groupId>
+			<artifactId>Rserve</artifactId>
 		</dependency>
 
 	</dependencies>
