@@ -31,7 +31,7 @@ package org.n52.wps.server.r;
 
 public enum RWPSConfigVariables {
 
-    SCRIPT_DIR, RESOURCE_DIR, ALGORITHM_PROPERTY_NAME, ENABLE_BATCH_START, RSERVE_HOST, RSERVE_PORT, RSERVE_USER, RSERVE_PASSWORD, R_DATATYPE_CONFIG, R_WORK_DIR_STRATEGY, R_WORK_DIR_NAME, R_CACHE_PROCESSES, R_SESSION_MEMORY_LIMIT;
+    SCRIPT_DIR, RESOURCE_DIR, ALGORITHM_PROPERTY_NAME, ENABLE_BATCH_START, RSERVE_HOST, RSERVE_PORT, RSERVE_USER, RSERVE_PASSWORD, R_DATATYPE_CONFIG, R_WORK_DIR_STRATEGY, R_WORK_DIR_NAME, R_CACHE_PROCESSES, R_SESSION_MEMORY_LIMIT, R_CLEAN_UP_WORK_DIR;
 
     public String toString() {
         switch (this) {
@@ -61,6 +61,8 @@ public enum RWPSConfigVariables {
             return "R_cacheDescriptions";
         case R_SESSION_MEMORY_LIMIT:
             return "R_session_memoryLimit";
+        case R_CLEAN_UP_WORK_DIR:
+            return "R_wdCleanUp";
         default:
             return "NO STRING REPRESENTATION DEFINED FOR ENUM CONSTANT!";
         }

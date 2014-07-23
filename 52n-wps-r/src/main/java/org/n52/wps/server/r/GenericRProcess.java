@@ -206,9 +206,9 @@ public class GenericRProcess extends AbstractObservableAlgorithm {
                 workspace.saveImage("afterExecution");
             log.debug("RESULT: " + Arrays.toString(result.entrySet().toArray()));
 
+            log.info("Finished {} \n\tWorkspace: {}\n\tSession: {}", this.toString(), workspace, session);
             session.cleanUp();
-            workspace.cleanUpInR(originalWorkDir);
-            workspace.cleanUpWithWPS();
+            workspace.cleanUp(originalWorkDir);
 
             return result;
         }
