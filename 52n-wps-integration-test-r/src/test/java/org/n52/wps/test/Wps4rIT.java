@@ -48,12 +48,8 @@ import javax.xml.parsers.ParserConfigurationException;
 import org.apache.commons.io.IOUtils;
 import org.apache.xmlbeans.XmlException;
 import org.apache.xmlbeans.XmlObject;
-import org.junit.AfterClass;
-import org.junit.Assume;
 import org.junit.BeforeClass;
 import org.junit.Test;
-import org.rosuda.REngine.Rserve.RConnection;
-import org.rosuda.REngine.Rserve.RserveException;
 import org.xml.sax.SAXException;
 
 /**
@@ -86,36 +82,6 @@ public class Wps4rIT {
     @BeforeClass
     public static void beforeClass() {
         wpsUrl = AllTestsIT.getURL();
-
-        // Seems not to work but it would be nice if it does...
-        // URL resource = WPS4RTester.class
-        // .getResource("/R/wps_config.xml");
-        // WPSConfig.forceInitialization(new File(resource.getFile()).getAbsolutePath());
-
-        String host = System.getProperty("test.rserve.host", "127.0.0.1");
-        int port = Integer.parseInt(System.getProperty("test.rserve.port", "6311"));
-        String user = System.getProperty("test.rserve.user", null);
-        String password = System.getProperty("test.rserve.pwd", null);
-        try {
-            RConnection c = getNewConnection(host, port, user, password);
-            c.close();
-        }
-        catch (RserveException e1) {
-            Assume.assumeNoException(e1);
-        }
-    }
-
-    @AfterClass
-    public static void afterClass() {
-        // WPSConfig.forceInitialization("src/main/webapp/config/wps_config.xml");
-    }
-
-    private static RConnection getNewConnection(String host, int port, String user, String password) throws RserveException {
-        RConnection con = new RConnection(host, port);
-        if (con != null && con.needLogin())
-            con.login(user, password);
-
-        return con;
     }
 
     /*

@@ -97,15 +97,6 @@
 		</plugins>
 	</build>
 
-	<profiles>
-		<!-- Here some profiles for specific environments Naming convention: env-[environmentname]
-		means you can simple activate the profile by adding -Denv=[environmentname]
-		at the commandline. -->
-		<profile>
-
-		</profile>
-	</profiles>
-
 	<dependencies>
 		<dependency>
 			<groupId>junit</groupId>
