@@ -74,6 +74,6 @@
 	</listener>
 
 	<listener>
-		<listener-class>org.n52.wps.server.WpsServletContextListener</listener-class>
+		<listener-class>org.n52.wps.webapp.WpsServletContextListener</listener-class>
 	</listener>
 </web-app>

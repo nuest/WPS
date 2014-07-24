@@ -1,5 +1,5 @@
 /**
- * ﻿Copyright (C) 2007 - 2014 52°North Initiative for Geospatial Open Source
+ * ﻿Copyright (C) 2010 - 2014 52°North Initiative for Geospatial Open Source
  * Software GmbH
  *
  * This program is free software; you can redistribute it and/or modify it
@@ -26,36 +26,36 @@
  * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the GNU General
  * Public License for more details.
  */
-package org.n52.wps.server;
+package org.n52.wps.server.r;
 
+import javax.ws.rs.GET;
+import javax.ws.rs.Path;
 
-import com.google.inject.Guice;
-import com.google.inject.Injector;
-import com.google.inject.servlet.GuiceServletContextListener;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
-public class WpsServletContextListener extends GuiceServletContextListener {
+import com.google.inject.servlet.RequestScoped;
 
-    // private ServletContextListener secListener;
-    //
-    // public WpsServletContextListener() {
-    // this.secListener = new SecurityConfigContextListener();
-    // }
+@Path("/r")
+@RequestScoped
+public class RResource {
 
-    @Override
-    protected Injector getInjector() {
-        return Guice.createInjector(new WpsModule()); // new WpsSecurityModule());
+    protected static Logger log = LoggerFactory.getLogger(RResource.class);
+
+    public RResource() {
+        log.debug("NEW {}", this);
     }
 
-    // @Override
-    // public void contextInitialized(ServletContextEvent servletContextEvent) {
-    // super.contextInitialized(servletContextEvent);
-    // this.secListener.contextInitialized(servletContextEvent);
-    // }
-    //
-    // @Override
-    // public void contextDestroyed(ServletContextEvent servletContextEvent) {
-    // super.contextDestroyed(servletContextEvent);
-    // this.secListener.contextDestroyed(servletContextEvent);
-    // }
+    @GET
+    @Path("/resource")
+    public String getResource() {
+        return "Hello resource";
+    }
+
+    @GET
+    @Path("/script")
+    public String getScript() {
+        return "Hello script";
+    }
 
 }

@@ -143,42 +143,11 @@
 			<artifactId>slf4j-simple</artifactId>
 			<scope>test</scope>
 		</dependency>
-        <dependency>
-			<groupId>com.thetransactioncompany</groupId>
-			<artifactId>cors-filter</artifactId>
-		</dependency>
-		<dependency>
-			<groupId>org.n52.security</groupId>
-			<artifactId>52n-security-config</artifactId>
-		</dependency>
-		<dependency>
-			<groupId>org.n52.security</groupId>
-			<artifactId>52n-security-authentication</artifactId>
-		</dependency>
-		<dependency>
-			<groupId>org.n52.security</groupId>
-			<artifactId>52n-security-authn-web</artifactId>
-		</dependency>
 
 		<dependency>
 			<groupId>com.google.inject</groupId>
 			<artifactId>guice</artifactId>
 			<version>3.0</version>
-		</dependency>
-		<dependency>
-			<groupId>com.google.inject.extensions</groupId>
-			<artifactId>guice-servlet</artifactId>
-			<version>3.0</version>
-		</dependency>
-		<dependency>
-			<groupId>com.sun.jersey</groupId>
-			<artifactId>jersey-server</artifactId>
-			<version>1.18.1</version>
-		</dependency>
-		<dependency>
-			<groupId>com.sun.jersey.contribs</groupId>
-			<artifactId>jersey-guice</artifactId>
-			<version>1.18.1</version>
 		</dependency>
 	</dependencies>
 </project>

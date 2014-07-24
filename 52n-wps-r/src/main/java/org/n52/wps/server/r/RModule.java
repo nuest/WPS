@@ -1,5 +1,5 @@
 /**
- * ﻿Copyright (C) 2007 - 2014 52°North Initiative for Geospatial Open Source
+ * ﻿Copyright (C) 2010 - 2014 52°North Initiative for Geospatial Open Source
  * Software GmbH
  *
  * This program is free software; you can redistribute it and/or modify it
@@ -26,48 +26,25 @@
  * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the GNU General
  * Public License for more details.
  */
-
-package org.n52.wps.server;
-
-import java.util.HashMap;
-import java.util.Map;
+package org.n52.wps.server.r;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import com.google.inject.Singleton;
 import com.google.inject.servlet.ServletModule;
-import com.thetransactioncompany.cors.CORSFilter;
 
-public class WpsModule extends ServletModule {
+public class RModule extends ServletModule {
 
-    protected static Logger log = LoggerFactory.getLogger(WpsModule.class);
+    protected static Logger log = LoggerFactory.getLogger(RModule.class);
 
     @Override
     protected void configureServlets() {
         log.info("Configure {}", this);
 
-        Map<String, String> corsParams = new HashMap<String, String>();
-        corsParams.put("cors.allowOrigin", "*");
-        corsParams.put("cors.allowGenericHttpRequests", "true");
-        corsParams.put("cors.supportedMethods", "GET, POST, HEAD, PUT, DELETE, OPTIONS");
-        corsParams.put("cors.supportedHeaders", "*");
-        corsParams.put("cors.exposedHeaders", "*");
-        bind(CORSFilter.class).in(Singleton.class);
-        filter("/*").through(CORSFilter.class, corsParams);
+        String baseDir = getServletContext().getRealPath("");
+        R_Config.getInstance(baseDir);
 
-        // FIXME this configuration parameter is used during integration tests
-        // from web.xml:
-        // <init-param>
-        // <param-name>wps.config.file</param-name>
-        // <param-value>${wps.config.file}</param-value>
-        // </init-param>
-        Map<String, String> params = new HashMap<String, String>();
-        params.put("wps.config.file", "config/wps_config.xml");
-
-        serve("/" + WebProcessingService.SERVLET_PATH).with(WebProcessingService.class, params);
-
-        serve("/" + RetrieveResultServlet.SERVLET_PATH).with(RetrieveResultServlet.class);
+        bind(RResource.class);
     }
 
 }

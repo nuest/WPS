@@ -58,7 +58,7 @@ public class RPropertyChangeManager implements PropertyChangeListener {
 
     private static RPropertyChangeManager instance;
 
-    private static R_Config config;
+    private R_Config config;
 
     private RPropertyChangeManager() {
         config = R_Config.getInstance();
