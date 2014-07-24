@@ -26,11 +26,19 @@
  * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the GNU General
  * Public License for more details.
  */
+
 package org.n52.wps.server.r;
 
 import javax.ws.rs.GET;
 import javax.ws.rs.Path;
+import javax.ws.rs.Produces;
+import javax.ws.rs.core.MediaType;
+import javax.ws.rs.core.Response;
+import javax.ws.rs.core.Response.Status;
 
+import org.n52.wps.server.r.workspace.RSessionManager;
+import org.rosuda.REngine.REXPMismatchException;
+import org.rosuda.REngine.Rserve.RserveException;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -42,7 +50,11 @@ public class RResource {
 
     protected static Logger log = LoggerFactory.getLogger(RResource.class);
 
+    private R_Config config;
+
     public RResource() {
+        this.config = R_Config.getInstance();
+
         log.debug("NEW {}", this);
     }
 
@@ -56,6 +68,28 @@ public class RResource {
     @Path("/script")
     public String getScript() {
         return "Hello script";
+    }
+
+    @GET
+    @Path("/sessionInfo")
+    @Produces(MediaType.TEXT_PLAIN)
+    public Response sessionInfo() {
+        FilteredRConnection rCon = null;
+        try {
+            rCon = config.openRConnection();
+
+            RSessionManager session = new RSessionManager(rCon, config);
+            String sessionInfo = session.getSessionInfo();
+            return Response.ok(sessionInfo).build();
+        }
+        catch (RserveException | REXPMismatchException e) {
+            log.error("Could not open connection to retrieve sesion information.", e);
+            return Response.status(Status.INTERNAL_SERVER_ERROR).entity(e.getMessage()).build();
+        }
+        finally {
+            if (rCon != null)
+                rCon.close();
+        }
     }
 
 }
