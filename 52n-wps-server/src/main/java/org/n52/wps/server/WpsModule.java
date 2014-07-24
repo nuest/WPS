@@ -36,6 +36,7 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import com.google.inject.servlet.ServletModule;
+import com.thetransactioncompany.cors.CORSFilter;
 
 public class WpsModule extends ServletModule {
 
@@ -44,6 +45,14 @@ public class WpsModule extends ServletModule {
     @Override
     protected void configureServlets() {
         log.info("Configure {}", this);
+
+        Map<String, String> corsParams = new HashMap<String, String>();
+        corsParams.put("cors.allowOrigin", "*");
+        corsParams.put("cors.allowGenericHttpRequests", "true");
+        corsParams.put("cors.supportedMethods", "GET, POST, HEAD, PUT, DELETE, OPTIONS");
+        corsParams.put("cors.supportedHeaders", "*");
+        corsParams.put("cors.exposedHeaders", "*");
+        filter("/*").through(CORSFilter.class, corsParams);
 
         // FIXME this configuration parameter is used during integration tests
         // from web.xml:
