@@ -35,6 +35,7 @@ import java.util.Map;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import com.google.inject.Singleton;
 import com.google.inject.servlet.ServletModule;
 import com.thetransactioncompany.cors.CORSFilter;
 
@@ -52,6 +53,7 @@ public class WpsModule extends ServletModule {
         corsParams.put("cors.supportedMethods", "GET, POST, HEAD, PUT, DELETE, OPTIONS");
         corsParams.put("cors.supportedHeaders", "*");
         corsParams.put("cors.exposedHeaders", "*");
+        bind(CORSFilter.class).in(Singleton.class);
         filter("/*").through(CORSFilter.class, corsParams);
 
         // FIXME this configuration parameter is used during integration tests

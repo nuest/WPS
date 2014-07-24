@@ -28,15 +28,34 @@
  */
 package org.n52.wps.server;
 
+
 import com.google.inject.Guice;
 import com.google.inject.Injector;
 import com.google.inject.servlet.GuiceServletContextListener;
 
 public class WpsServletContextListener extends GuiceServletContextListener {
 
+    // private ServletContextListener secListener;
+    //
+    // public WpsServletContextListener() {
+    // this.secListener = new SecurityConfigContextListener();
+    // }
+
     @Override
     protected Injector getInjector() {
-        return Guice.createInjector(new WpsModule());
+        return Guice.createInjector(new WpsModule()); // new WpsSecurityModule());
     }
+
+    // @Override
+    // public void contextInitialized(ServletContextEvent servletContextEvent) {
+    // super.contextInitialized(servletContextEvent);
+    // this.secListener.contextInitialized(servletContextEvent);
+    // }
+    //
+    // @Override
+    // public void contextDestroyed(ServletContextEvent servletContextEvent) {
+    // super.contextDestroyed(servletContextEvent);
+    // this.secListener.contextDestroyed(servletContextEvent);
+    // }
 
 }

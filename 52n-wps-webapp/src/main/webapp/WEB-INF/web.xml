@@ -3,7 +3,8 @@
 	xsi:schemaLocation="http://java.sun.com/xml/ns/j2ee http://java.sun.com/xml/ns/j2ee/web-app_2_4.xsd"
 	version="2.4">
 	<display-name>52°North Web Processing Service, Git: ${git.revision} @
-		${timestamp}</display-name>
+		${timestamp}
+	</display-name>
 	<description>A web processing framework supporting the OGC WPS 1.0.0 specification</description>
 
 	<!-- security-constraint> <web-resource-collection> <web-resource-name>My 
@@ -44,7 +45,7 @@
 		<filter-name>guiceFilter</filter-name>
 		<url-pattern>/*</url-pattern>
 	</filter-mapping>
-
+	
 	<!-- 52n Security -->
 	<context-param>
 		<param-name>security.config.validation</param-name>
@@ -71,6 +72,7 @@
 	<listener>
 		<listener-class>org.n52.security.service.config.support.SecurityConfigContextListener</listener-class>
 	</listener>
+
 	<listener>
 		<listener-class>org.n52.wps.server.WpsServletContextListener</listener-class>
 	</listener>
