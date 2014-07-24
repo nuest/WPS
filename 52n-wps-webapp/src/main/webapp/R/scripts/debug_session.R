@@ -78,7 +78,7 @@ cat("# WPS4R DEBUG SCRTIPT OUTPUT - ", configuration,
 		file = fileConn, fill = 80)
 close(fileConn)
 
-#wps.out: id = debugfile, type = text, title = debug information
+#wps.out: id = debugfile, type = text/x-markdown, title = debug information
 # abstract = all debug information in one file;
 
 
