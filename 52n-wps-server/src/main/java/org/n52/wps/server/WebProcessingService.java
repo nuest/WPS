@@ -59,18 +59,20 @@ import org.n52.wps.util.XMLBeansHelper;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import com.google.inject.Singleton;
+
 /**
  * This WPS supports HTTP GET for describeProcess and getCapabilities and XML-POST for execute.
- *
- * @author foerster
- *
+ * 
+ * @author foerster, Benjamin Pross, Daniel Nüst
+ * 
  */
+@Singleton
 public class WebProcessingService extends HttpServlet {
 
     // Universal version identifier for a Serializable class.
     // Should be used here, because HttpServlet implements the java.io.Serializable
     private static final long serialVersionUID = 8943233273641771839L;
-    public static String PROPERTY_NAME_WEBAPP_PATH = "webappPath";
     public static String BASE_DIR = null;
     public static String WEBAPP_PATH = null;
     public static String SERVLET_PATH = "WebProcessingService";
@@ -225,7 +227,6 @@ public class WebProcessingService extends HttpServlet {
 
     protected void doGet(HttpServletRequest req, HttpServletResponse res) throws ServletException, IOException {
         try {
-            @SuppressWarnings("resource")
             OutputStream out = res.getOutputStream(); // closed by res.flushBuffer();
             RequestHandler handler = new RequestHandler((Map<String, String[]>) req.getParameterMap(), out);
             String mimeType = handler.getResponseMimeType();

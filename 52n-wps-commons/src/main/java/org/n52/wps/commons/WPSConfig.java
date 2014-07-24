@@ -36,9 +36,6 @@ import javax.naming.NamingException;
 import javax.servlet.ServletConfig;
 
 import org.apache.xmlbeans.XmlException;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
-
 import org.n52.wps.FormatDocument.Format;
 import org.n52.wps.GeneratorDocument.Generator;
 import org.n52.wps.ParserDocument.Parser;
@@ -46,6 +43,8 @@ import org.n52.wps.PropertyDocument.Property;
 import org.n52.wps.RepositoryDocument.Repository;
 import org.n52.wps.WPSConfigurationDocument;
 import org.n52.wps.impl.WPSConfigurationDocumentImpl.WPSConfigurationImpl;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 import com.google.common.base.Optional;
 import com.google.common.collect.ImmutableList;
@@ -477,6 +476,7 @@ public class WPSConfig implements Serializable {
     private static class InitParameterStrategy extends WPSConfigFileStrategy {
         @Override
         protected String getPath(Optional<ServletConfig> servletConfig) {
+            // FIXME init-param
             return servletConfig.isPresent() ? servletConfig.get().getInitParameter(CONFIG_FILE_PROPERTY) : null;
         }
     }
@@ -485,6 +485,7 @@ public class WPSConfig implements Serializable {
         @Override
         protected String getPath(Optional<ServletConfig> servletConfig) {
             if (servletConfig.isPresent()) {
+                // FIXME init-param
                 String path = servletConfig.get().getInitParameter(CONFIG_FILE_PROPERTY);
                 if (path != null) {
                     return servletConfig.get().getServletContext().getRealPath(path);

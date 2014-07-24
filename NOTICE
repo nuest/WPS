@@ -91,6 +91,8 @@ This project includes:
   GML2 XML Support under Lesser General Public License (LGPL)
   GML3 XML Support under Lesser General Public License (LGPL)
   gmlpacket-2.0 under GNU GENERAL PUBLIC LICENSE (GPL Version 2, June 1991)
+  Google Guice - Core Library under The Apache Software License, Version 2.0
+  Google Guice - Extensions - Servlet under The Apache Software License, Version 2.0
   Grid Coverage module under Lesser General Public License (LGPL)
   Guava (Google Common Libraries) Annotations under The Apache Software License, Version 2.0
   Guava (Google Common Libraries) Base under The Apache Software License, Version 2.0
@@ -123,11 +125,16 @@ This project includes:
   JavaBeans Activation Framework (JAF) under Common Development and Distribution License (CDDL) v1.0
   JavaMail 1.4 under The Apache Software License, Version 2.0
   JavaMail API under Common Development and Distribution License (CDDL) v1.0
+  javax.inject under The Apache Software License, Version 2.0
   jaxen under jaxen license, http://jaxen.codehaus.org/license.html
   JCL 1.1.1 implemented over SLF4J under MIT License
   jcommon under GNU Lesser General Public Licence
   jdom under JDOM license, https://github.com/hunterhacker/jdom/blob/master/LICENSE.txt
   jep under GNU General Public License, version 2
+  jersey-core under CDDL 1.1 or GPL2 w/ CPE
+  jersey-guice under CDDL 1.1 or GPL2 w/ CPE
+  jersey-server under CDDL 1.1 or GPL2 w/ CPE
+  jersey-servlet under CDDL 1.1 or GPL2 w/ CPE
   jfreechart under GNU Lesser General Public Licence
   jGridShift under GNU Lesser General Public License, version 2.0 (LGPLv2)
   jMock 2 Core under BSD style
