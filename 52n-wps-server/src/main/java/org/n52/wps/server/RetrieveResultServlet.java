@@ -42,14 +42,15 @@ import javax.servlet.http.HttpServletResponse;
 
 import org.apache.commons.io.IOUtils;
 import org.apache.commons.lang.StringUtils;
-import org.n52.wps.server.database.DatabaseFactory;
-import org.n52.wps.server.database.IDatabase;
 import org.n52.wps.commons.MIMEUtil;
 import org.n52.wps.commons.XMLUtil;
+import org.n52.wps.server.database.DatabaseFactory;
+import org.n52.wps.server.database.IDatabase;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import org.springframework.web.HttpRequestHandler;
 
-public class RetrieveResultServlet extends HttpServlet {
+public class RetrieveResultServlet extends HttpServlet implements HttpRequestHandler{
 
     private final static Logger LOGGER = LoggerFactory.getLogger(RetrieveResultServlet.class);
     private static final long serialVersionUID = -268198171054599696L;
@@ -256,5 +257,14 @@ public class RetrieveResultServlet extends HttpServlet {
 		} catch (Exception e) {
 			return false;
 		}
+	}
+
+	@Override
+	public void handleRequest(HttpServletRequest request,
+			HttpServletResponse response) throws ServletException, IOException {
+		if(request.getMethod().equals("GET")){
+			doGet(request, response);
+		}
+		
 	}
 }

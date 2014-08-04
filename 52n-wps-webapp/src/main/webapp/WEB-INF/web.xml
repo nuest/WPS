@@ -5,6 +5,14 @@
 	<display-name>52°North Web Processing Service, Git: ${git.revision} @ ${timestamp}</display-name>
 	<description>A web processing framework supporting the OGC WPS 1.0.0 specification</description>
 
+    <context-param>
+        <param-name>contextConfigLocation</param-name>
+        <param-value>classpath:applicationContext.xml</param-value>
+    </context-param>
+    <listener>
+        <listener-class>org.springframework.web.context.ContextLoaderListener</listener-class>
+    </listener>
+    
 	<!-- security-constraint>
 		<web-resource-collection>
 			<web-resource-name>My JSP</web-resource-name>

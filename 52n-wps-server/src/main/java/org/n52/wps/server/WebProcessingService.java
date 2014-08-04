@@ -43,7 +43,6 @@ import java.util.zip.GZIPOutputStream;
 
 import javax.servlet.ServletConfig;
 import javax.servlet.ServletException;
-import javax.servlet.http.HttpServlet;
 import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
 
@@ -58,6 +57,8 @@ import org.n52.wps.server.handler.RequestHandler;
 import org.n52.wps.util.XMLBeansHelper;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import org.springframework.web.HttpRequestHandler;
+import org.springframework.web.context.support.HttpRequestHandlerServlet;
 
 /**
  * This WPS supports HTTP GET for describeProcess and getCapabilities and XML-POST for execute.
@@ -65,7 +66,7 @@ import org.slf4j.LoggerFactory;
  * @author foerster
  *
  */
-public class WebProcessingService extends HttpServlet {
+public class WebProcessingService extends HttpRequestHandlerServlet implements HttpRequestHandler{
 
     // Universal version identifier for a Serializable class.
     // Should be used here, because HttpServlet implements the java.io.Serializable
@@ -378,4 +379,14 @@ public class WebProcessingService extends HttpServlet {
         super.destroy();
         DatabaseFactory.getDatabase().shutdown();
     }
+
+	@Override
+	public void handleRequest(HttpServletRequest request,
+			HttpServletResponse response) throws ServletException, IOException {
+		if(request.getMethod().equals("GET")){
+			doGet(request, response);
+		}else if(request.getMethod().equals("POST")){
+			doPost(request, response);
+		}		
+	}
 }
