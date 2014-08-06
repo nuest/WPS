@@ -51,6 +51,7 @@ This project includes:
   Abdera Bundle Jar under The Apache Software License, Version 2.0
   Activation 1.1 under The Apache Software License, Version 2.0
   AOP alliance under Public Domain
+  Apache JAMES Mime4j (Core) under The Apache Software License, Version 2.0
   API interfaces under Lesser General Public License (LGPL)
   ArcGrid datasource module under Lesser General Public License (LGPL)
   authentication under GNU GENERAL PUBLIC LICENSE Version 2, June 1991
@@ -119,10 +120,12 @@ This project includes:
   jai_imageio under Java Advanced Imaging Distribution License, http://download.java.net/media/jai/builds/release/1_1_3/LICENSE-jai.txt
   Java Advanced Imaging under Java Advanced Imaging Distribution License, http://download.java.net/media/jai/builds/release/1_1_3/LICENSE-jai.txt
   Java Property Utility under The Apache Software License, Version 2.0
+  Java Servlet API under CDDL + GPLv2 with classpath exception
   Java UUID Generator under The Apache Software License, Version 2.0 or GNU Lesser General Public License v2.1
   JavaBeans Activation Framework (JAF) under Common Development and Distribution License (CDDL) v1.0
   JavaMail 1.4 under The Apache Software License, Version 2.0
   JavaMail API under Common Development and Distribution License (CDDL) v1.0
+  JavaServer Pages(TM) API under CDDL + GPLv2 with classpath exception
   jaxen under jaxen license, http://jaxen.codehaus.org/license.html
   JCL 1.1.1 implemented over SLF4J under MIT License
   jcommon under GNU Lesser General Public Licence
@@ -137,7 +140,6 @@ This project includes:
   Joda time under Apache 2
   json-lib under The Apache Software License, Version 2.0
   JSON.simple under The Apache Software License, Version 2.0
-  jsp-api under GNU GENERAL PUBLIC LICENSE (GPL Version 2, June 1991)
   jsr-275 under BSD License
   jstl under GNU GENERAL PUBLIC LICENSE (GPL Version 2, June 1991)
   JTS Topology Suite under Lesser General Public License (LGPL)
