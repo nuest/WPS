@@ -138,7 +138,8 @@ public class LocalAlgorithmRepository implements ITransactionalAlgorithmReposito
 	@Override
 	public ProcessDescriptionType getProcessDescription(String processID) {
 		if(!processDescriptionMap.containsKey(processID)){
-			processDescriptionMap.put(processID, getAlgorithm(processID).getDescription());
+		    IAlgorithm alg = getAlgorithm(processID);
+		    processDescriptionMap.put(processID, alg.getDescription());
 		}
 		return processDescriptionMap.get(processID);
 	}
@@ -148,15 +149,5 @@ public class LocalAlgorithmRepository implements ITransactionalAlgorithmReposito
 		// TODO Auto-generated method stub
 		
     }
-		
-	
-	
-
-	
-
-	
-
-
-	
 
 }
