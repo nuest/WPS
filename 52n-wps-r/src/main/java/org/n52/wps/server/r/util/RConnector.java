@@ -95,13 +95,11 @@ public class RConnector {
                 log.info("Attempting to start RServe.");
 
                 try {
-                    con = attemptStarts(host, port);
+                    con = attemptStarts(host, port, START_ATTEMP_COUNT);
                 }
                 catch (Exception e) {
                     log.error("Attempted to start Rserve and establish a connection failed", e);
-
-                    // Throwable#addSuppressed() only supported by Java 1.7+
-                    // rse.addSuppressed(e);
+                    rse.addSuppressed(e);
                 }
             }
             else
@@ -115,14 +113,14 @@ public class RConnector {
         return con;
     }
 
-    private FilteredRConnection attemptStarts(String host, int port) throws InterruptedException,
+    private FilteredRConnection attemptStarts(String host, int port, int attempts) throws InterruptedException,
             IOException,
             RserveException {
         this.starter.startR();
 
         int attempt = 1;
         FilteredRConnection con = null;
-        while (attempt <= START_ATTEMP_COUNT) {
+        while (attempt <= attempts) {
             try {
                 Thread.sleep(START_ATTEMPT_SLEEP); // wait for R to startup,
                                                    // then establish connection
@@ -137,6 +135,8 @@ public class RConnector {
                 attempt++;
             }
         }
+
+        log.info("Started R, connection is {}", con);
         return con;
     }
 

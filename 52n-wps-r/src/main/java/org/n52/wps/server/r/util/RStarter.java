@@ -26,6 +26,7 @@
  * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the GNU General
  * Public License for more details.
  */
+
 package org.n52.wps.server.r.util;
 
 import java.io.IOException;
@@ -53,8 +54,16 @@ public class RStarter {
     }
 
     private static void startRServeOnWindows() throws IOException {
-        String rserveStartCMD = "cmd /c start R -e library(Rserve);Rserve() --vanilla --slave";
-        Runtime.getRuntime().exec(rserveStartCMD);
+        // TODO try to do more with the process here, e.g. finding out if R could actually be started, or
+        // setting the working directory! See http://docs.oracle.com/javase/7/docs/api/java/lang/Runtime.html
+        // and
+        // http://openbook.galileocomputing.de/javainsel/javainsel_11_008.html
+        String rserveStartCMD = "cmd /c start R -e library(Rserve); Rserve() --vanilla --slave";
+        Process process = Runtime.getRuntime().exec(rserveStartCMD);
+
+        log.info("Process: {}, alive: {}", process.toString(), process.isAlive());
+        // TODO try to connect to output stream here and redirect it to user interface, and store the process
+        // so that it can be destroyed.
     }
 
     public void startR() throws InterruptedException, IOException {
@@ -66,8 +75,6 @@ public class RStarter {
         else if (System.getProperty("os.name").toLowerCase().indexOf("windows") > -1) {
             startRServeOnWindows();
         }
-
-        log.info("Started R.");
     }
 
 }

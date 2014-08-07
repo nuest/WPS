@@ -45,6 +45,7 @@ import javax.servlet.ServletException;
 import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
 
+import net.opengis.ows.x11.ExceptionReportDocument;
 import net.opengis.wps.x100.CapabilitiesDocument;
 
 import org.apache.xmlbeans.XmlException;
@@ -126,9 +127,10 @@ public class WebProcessingService {
         RepositoryManager repoManager = RepositoryManager.getInstance();
         LOGGER.info("Initialized {}", repoManager);
 
-        LOGGER.info("Service base url is {} | Service endpoint is {}",
+        LOGGER.info("Service base url is {} | Service endpoint is {} | Used config file is {}",
                     conf.getServiceBaseUrl(),
-                    conf.getServiceEndpoint());
+                    conf.getServiceEndpoint(),
+                    WPSConfig.getConfigPath());
 
         IDatabase database = DatabaseFactory.getDatabase();
         LOGGER.info("Initialized {}", database);
@@ -303,13 +305,14 @@ public class WebProcessingService {
         }
     }
 
-    private static void handleException(ExceptionReport exception, HttpServletResponse res) {
-        res.setContentType(XML_CONTENT_TYPE);
+    private void handleException(ExceptionReport exception, HttpServletResponse res) {
         try {
             LOGGER.debug(exception.toString());
             // DO NOT MIX getWriter and getOuputStream!
-            exception.getExceptionDocument().save(res.getOutputStream(), XMLBeansHelper.getXmlOptions());
+            ExceptionReportDocument document = exception.getExceptionDocument();
+            document.save(res.getOutputStream(), XMLBeansHelper.getXmlOptions());
 
+            res.setContentType(XML_CONTENT_TYPE);
             res.setStatus(HttpServletResponse.SC_OK);
         }
         catch (IOException e) {
@@ -323,6 +326,11 @@ public class WebProcessingService {
                 res.setStatus(HttpServletResponse.SC_INTERNAL_SERVER_ERROR);
             }
         }
+        catch (Exception e) {
+            LOGGER.error("here..", e);
+        }
+
+        LOGGER.debug("Wrote exception response.");
     }
 
     @Override

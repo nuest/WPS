@@ -37,8 +37,6 @@ import java.util.Collection;
 
 import net.opengis.wps.x100.ProcessDescriptionType;
 
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 import org.n52.movingcode.runtime.GlobalRepositoryManager;
 import org.n52.movingcode.runtime.ProcessorConfig;
 import org.n52.movingcode.runtime.codepackage.MovingCodePackage;
@@ -49,6 +47,8 @@ import org.n52.wps.PropertyDocument.Property;
 import org.n52.wps.commons.WPSConfig;
 import org.n52.wps.server.IAlgorithm;
 import org.n52.wps.server.IAlgorithmRepository;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 /**
  * This class implements an {@link IAlgorithmRepository} for MovingCode Packages. This repository maintains a
@@ -147,7 +147,7 @@ public class MCProcessRepository implements IAlgorithmRepository {
 	// ----------------------------------------------------------------
 	// methods and logic for processor configuration
 	private static void configureMCRuntime() {
-		String configFilePath = WPSConfig.getConfigDir() + CONFIG_FILE_NAME;
+        String configFilePath = WPSConfig.getConfigDir() + CONFIG_FILE_NAME;
 		File configFile = new File(configFilePath);
 		boolean loaded = ProcessorConfig.getInstance().setConfig(configFile);
 		if ( !loaded) {

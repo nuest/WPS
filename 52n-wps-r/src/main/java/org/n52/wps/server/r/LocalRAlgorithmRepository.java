@@ -66,7 +66,7 @@ public class LocalRAlgorithmRepository implements ITransactionalAlgorithmReposit
     private R_Config rConfig;
 
     public LocalRAlgorithmRepository() {
-        LOGGER.info("Initializing LocalRAlgorithmRepository");
+        LOGGER.info("Initializing Local*R*AlgorithmRepository");
         this.algorithms = new HashMap<String, IAlgorithm>();
         this.rConfig = R_Config.getInstance();
 
@@ -77,10 +77,12 @@ public class LocalRAlgorithmRepository implements ITransactionalAlgorithmReposit
         changeManager.updateRepositoryConfiguration();
 
         CustomDataTypeManager.getInstance().update();
-        checkStartUpConditions();
+        boolean startUpConditions = checkStartUpConditions();
 
-        // finally add all available algorithms from the R config
-        addAllAlgorithms();
+        if (startUpConditions)
+            addAllAlgorithms();
+        else
+            LOGGER.warn("Start up conditions are not fulfilled, not adding any algorithms!");
     }
 
     /**
@@ -112,6 +114,9 @@ public class LocalRAlgorithmRepository implements ITransactionalAlgorithmReposit
         return true;
     }
 
+    /**
+     * add all available algorithms from the R config
+     */
     private void addAllAlgorithms() {
         // add algorithms from config file to repository
         List<RProcessInfo> processInfoList = new ArrayList<RProcessInfo>();
