@@ -6,9 +6,19 @@
 http://www.springframework.org/schema/context http://www.springframework.org/schema/context/spring-context.xsd 
 http://www.springframework.org/schema/mvc http://www.springframework.org/schema/mvc/spring-mvc-3.0.xsd">
 
-	<!-- <import resource="classpath*:moduleContext.xml" /> -->
+	<context:component-scan base-package="org.n52.wps" />
+	
+	<mvc:annotation-driven />
 
-	<!-- <context:component-scan base-package="org.n52.wps" /> -->
-	<context:annotation-config />
+	<!-- <mvc:view-controller path="/" view-name="/index.html"/> -->
+	<!-- <bean -->
+	<!-- class="org.springframework.web.servlet.view.InternalResourceViewResolver"> -->
+	<!-- <property name="prefix"> -->
+	<!-- <value>/</value> -->
+	<!-- </property> -->
+	<!-- <property name="suffix"> -->
+	<!-- <value>.html</value> -->
+	<!-- </property> -->
+	<!-- </bean> -->
 
 </beans>

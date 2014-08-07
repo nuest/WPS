@@ -26,6 +26,7 @@
  * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the GNU General
  * Public License for more details.
  */
+
 package org.n52.wps.server;
 
 // FvK: added Property Change Listener support
@@ -38,13 +39,13 @@ import java.io.IOException;
 import java.io.OutputStream;
 import java.io.StringWriter;
 import java.net.URLDecoder;
-import java.util.Map;
-import java.util.zip.GZIPOutputStream;
 
-import javax.servlet.ServletConfig;
+import javax.servlet.ServletContext;
 import javax.servlet.ServletException;
 import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
+
+import net.opengis.wps.x100.CapabilitiesDocument;
 
 import org.apache.xmlbeans.XmlException;
 import org.n52.wps.GeneratorDocument.Generator;
@@ -53,79 +54,52 @@ import org.n52.wps.commons.WPSConfig;
 import org.n52.wps.io.GeneratorFactory;
 import org.n52.wps.io.ParserFactory;
 import org.n52.wps.server.database.DatabaseFactory;
+import org.n52.wps.server.database.IDatabase;
 import org.n52.wps.server.handler.RequestHandler;
 import org.n52.wps.util.XMLBeansHelper;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-import org.springframework.web.HttpRequestHandler;
-import org.springframework.web.context.support.HttpRequestHandlerServlet;
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.stereotype.Controller;
+import org.springframework.web.bind.annotation.RequestMapping;
+import org.springframework.web.bind.annotation.RequestMethod;
 
 /**
  * This WPS supports HTTP GET for describeProcess and getCapabilities and XML-POST for execute.
  *
- * @author foerster
+ * @author foerster, Benjamin Pross, Daniel Nüst
  *
  */
-public class WebProcessingService extends HttpRequestHandlerServlet implements HttpRequestHandler{
+@Controller
+@RequestMapping("/" + WPSConfig.SERVLET_PATH)
+public class WebProcessingService {
 
-    // Universal version identifier for a Serializable class.
-    // Should be used here, because HttpServlet implements the java.io.Serializable
-    private static final long serialVersionUID = 8943233273641771839L;
-    public static String PROPERTY_NAME_WEBAPP_PATH = "webappPath";
-    public static String BASE_DIR = null;
-    public static String WEBAPP_PATH = null;
-    public static String SERVLET_PATH = "WebProcessingService";
-    public static String WPS_NAMESPACE = "http://www.opengis.net/wps/1.0.0";
     public static String DEFAULT_LANGUAGE = "en-US";
+
+    public final static String SPECIAL_XML_POST_VARIABLE = "request";
+
+    private static final String XML_CONTENT_TYPE = "text/xml";
+
     protected static Logger LOGGER = LoggerFactory.getLogger(WebProcessingService.class);
 
-    /**
-     *
-     * Returns a preconfigured OutputStream It takes care of: - caching - content-Encoding
-     *
-     * @param hsRequest
-     *        the HttpServletRequest
-     * @param hsResponse
-     *        the HttpServlerResponse
-     * @return the preconfigured OutputStream
-     * @throws IOException
-     *         a task of the tomcat
-     */
-    private static OutputStream getConfiguredOutputStream(HttpServletRequest hsRequest, HttpServletResponse hsResponse) throws IOException {
-        /*
-         * Forbids clients to cache the response May solve problems with proxies and bad implementations
-         */
-        hsResponse.setHeader("Expires", "0");
-        if (hsRequest.getProtocol().equals("HTTP/1.1")) {
-            hsResponse.setHeader("Cache-Control", "no-cache");
-        } else if (hsRequest.getProtocol().equals("HTTP/1.0")) {
-            hsResponse.setHeader("Pragma", "no-cache");
-        }
+    private static String applicationBaseDir = null;
 
-        // Enable/disable gzip compression
-        if (hsRequest.getHeader("Accept-Encoding") != null
-                && hsRequest.getHeader("Accept-Encoding").indexOf("gzip") >= 0) {
-            hsResponse.setHeader("Content-Encoding", "gzip");
-            LOGGER.info("gzip-Compression for output enabled");
-            return new GZIPOutputStream(hsResponse.getOutputStream());
-        } // else {
-        LOGGER.info("gzip-Compression for output disabled");
-        return hsResponse.getOutputStream();
-        // }
+    @Autowired
+    public WebProcessingService(ServletContext context) {
+        init(context);
+        LOGGER.info("NEW {}", this);
     }
 
-    @Override
-    public void init(ServletConfig config) throws ServletException {
-        super.init(config);
-        
+    public void init(ServletContext context) {
+        LOGGER.info("*** WebProcessingService initializing... ***");
+        WPSConfig conf = WPSConfig.getInstance();
+
         // this is important to set the lon lat support for correct CRS transformation.
-        // TODO: Might be changed to an additional configuration parameter.
+        // TODO: change to an additional configuration parameter.
         System.setProperty("org.geotools.referencing.forceXY", "true");
 
-        LOGGER.info("WebProcessingService initializing...");
-
         try {
-            if (WPSConfig.getInstance(config) == null) {
+            if (conf == null) {
                 LOGGER.error("Initialization failed! Please look at the properties file!");
                 return;
             }
@@ -134,34 +108,35 @@ public class WebProcessingService extends HttpRequestHandlerServlet implements H
             LOGGER.error("Initialization failed! Please look at the properties file!", e);
             return;
         }
-        LOGGER.info("Initialization of wps properties successful!");
+        LOGGER.info("Initialization of WPS properties successful!\n\t\tWPSConfig: {}", conf);
 
-        BASE_DIR = this.getServletContext().getRealPath("");
+        // BASE_DIR = this.getServletContext().getRealPath("");
+        applicationBaseDir = context.getRealPath("");
+        LOGGER.debug("Application base dir is {}", applicationBaseDir);
 
-        Parser[] parsers = WPSConfig.getInstance().getActiveRegisteredParser();
+        Parser[] parsers = conf.getActiveRegisteredParser();
         ParserFactory.initialize(parsers);
+        LOGGER.info("Initialized {}", ParserFactory.getInstance());
 
-        Generator[] generators = WPSConfig.getInstance().getActiveRegisteredGenerator();
+        Generator[] generators = conf.getActiveRegisteredGenerator();
         GeneratorFactory.initialize(generators);
+        LOGGER.info("Initialized {}", GeneratorFactory.getInstance());
 
-        // call RepositoyManager to initialize
-        RepositoryManager.getInstance();
-        LOGGER.info("Algorithms initialized");
+        RepositoryManager repoManager = RepositoryManager.getInstance();
+        LOGGER.info("Initialized {}", repoManager);
 
-        // String customWebappPath = WPSConfiguration.getInstance().getProperty(PROPERTY_NAME_WEBAPP_PATH);
-        String customWebappPath = WPSConfig.getInstance().getWPSConfig().getServer().getWebappPath();
-        if (customWebappPath != null) {
-            WEBAPP_PATH = customWebappPath;
-        }
-        else {
-            WEBAPP_PATH = "wps";
-            LOGGER.warn("No custom webapp path found, use default wps");
-        }
-        LOGGER.info("webappPath is set to: " + customWebappPath);
+        LOGGER.info("Service base url is {} | Service endpoint is {}",
+                    conf.getServiceBaseUrl(),
+                    conf.getServiceEndpoint());
+
+        IDatabase database = DatabaseFactory.getDatabase();
+        LOGGER.info("Initialized {}", database);
 
         try {
-            CapabilitiesConfiguration.getInstance(BASE_DIR + File.separator + "config"
-                    + File.separator + "wpsCapabilitiesSkeleton.xml");
+            String capsConfigPath = getApplicationBaseDir() + File.separator + WPSConfig.CONFIG_FILE_DIR + File.separator
+                    + WPSConfig.CAPABILITES_SKELETON_NAME;
+            CapabilitiesDocument capsDoc = CapabilitiesConfiguration.getInstance(capsConfigPath);
+            LOGGER.info("Initialized capabilities document:\n{}", capsDoc);
         }
         catch (IOException e) {
             LOGGER.error("error while initializing capabilitiesConfiguration", e);
@@ -170,15 +145,10 @@ public class WebProcessingService extends HttpRequestHandlerServlet implements H
             LOGGER.error("error while initializing capabilitiesConfiguration", e);
         }
 
-        // Get an instance of the database for initialization of the database
-        DatabaseFactory.getDatabase();
-
-        LOGGER.info("WPS up and running!");
-
         // FvK: added Property Change Listener support
         // creates listener and register it to the wpsConfig instance.
         // it will listen to changes of the wpsCapabilities
-        WPSConfig.getInstance().addPropertyChangeListener(org.n52.wps.commons.WPSConfig.WPSCAPABILITIES_SKELETON_PROPERTY_EVENT_NAME,
+        conf.addPropertyChangeListener(org.n52.wps.commons.WPSConfig.WPSCAPABILITIES_SKELETON_PROPERTY_EVENT_NAME,
                                                           new PropertyChangeListener() {
                                                               @Override
                                                               public void propertyChange(final PropertyChangeEvent propertyChangeEvent) {
@@ -202,7 +172,7 @@ public class WebProcessingService extends HttpRequestHandlerServlet implements H
         // FvK: added Property Change Listener support
         // creates listener and register it to the wpsConfig instance.
         // it will listen to changes of the wpsConfiguration
-        WPSConfig.getInstance().addPropertyChangeListener(org.n52.wps.commons.WPSConfig.WPSCONFIG_PROPERTY_EVENT_NAME,
+        conf.addPropertyChangeListener(org.n52.wps.commons.WPSConfig.WPSCONFIG_PROPERTY_EVENT_NAME,
                                                           new PropertyChangeListener() {
                                                               public void propertyChange(final PropertyChangeEvent propertyChangeEvent) {
                                                                   LOGGER.info(this.getClass().getName()
@@ -222,13 +192,22 @@ public class WebProcessingService extends HttpRequestHandlerServlet implements H
                                                               }
                                                           });
 
+        LOGGER.info("*** WPS up and running! ***");
     }
 
-    protected void doGet(HttpServletRequest req, HttpServletResponse res) throws ServletException, IOException {
-        try {
-            @SuppressWarnings("resource")
-            OutputStream out = res.getOutputStream(); // closed by res.flushBuffer();
-            RequestHandler handler = new RequestHandler((Map<String, String[]>) req.getParameterMap(), out);
+    public static String getApplicationBaseDir() {
+        return applicationBaseDir;
+    }
+
+    @RequestMapping(value = "/test")
+    public String getFallback() {
+        return "Fallback for GET Requests";
+    }
+
+    @RequestMapping(method = RequestMethod.GET)
+    public void doGet(HttpServletRequest req, HttpServletResponse res) throws ServletException, IOException {
+        try (OutputStream out = res.getOutputStream();) {
+            RequestHandler handler = new RequestHandler(req.getParameterMap(), out);
             String mimeType = handler.getResponseMimeType();
             res.setContentType(mimeType);
             handler.handle();
@@ -248,16 +227,11 @@ public class WebProcessingService extends HttpRequestHandlerServlet implements H
             if (res != null) {
                 res.flushBuffer();
             }
-            // out.flush();
-            // out.close();
         }
     }
 
-    public final static int MAXIMUM_REQUEST_SIZE = 128 << 20;
-    public final static String SPECIAL_XML_POST_VARIABLE = "request";
-    private static final String XML_CONTENT_TYPE = "text/xml";
-
-    protected void doPost(HttpServletRequest req, HttpServletResponse res) throws ServletException, IOException {
+    @RequestMapping(method = RequestMethod.POST)
+    public void doPost(HttpServletRequest req, HttpServletResponse res) throws ServletException, IOException {
         BufferedReader reader = null;
 
         try {
@@ -268,9 +242,10 @@ public class WebProcessingService extends HttpRequestHandlerServlet implements H
             }
 
             int contentLength = req.getContentLength();
-            if (contentLength > MAXIMUM_REQUEST_SIZE) {
+            if (contentLength > WPSConfig.MAXIMUM_REQUEST_SIZE) {
                 LOGGER.warn("POST request rejected, request size of " + contentLength + " too large.");
-                ExceptionReport er = new ExceptionReport("Request body too large, limited to " + MAXIMUM_REQUEST_SIZE
+                ExceptionReport er = new ExceptionReport("Request body too large, limited to "
+                        + WPSConfig.MAXIMUM_REQUEST_SIZE
                         + " bytes", ExceptionReport.NO_APPLICABLE_CODE);
                 handleException(er, res);
             }
@@ -284,7 +259,7 @@ public class WebProcessingService extends HttpRequestHandlerServlet implements H
             reader = req.getReader();
             char[] buffer = new char[8192];
             int read;
-            while ( (read = reader.read(buffer)) != -1 && requestSize < MAXIMUM_REQUEST_SIZE) {
+            while ( (read = reader.read(buffer)) != -1 && requestSize < WPSConfig.MAXIMUM_REQUEST_SIZE) {
                 writer.write(buffer, 0, read);
                 requestSize += read;
             }
@@ -292,9 +267,10 @@ public class WebProcessingService extends HttpRequestHandlerServlet implements H
             LOGGER.debug("POST request contained  " + requestSize + " characters");
 
             // Protect against denial of service attacks.
-            if (requestSize >= MAXIMUM_REQUEST_SIZE && reader.read() > -1) {
+            if (requestSize >= WPSConfig.MAXIMUM_REQUEST_SIZE && reader.read() > -1) {
                 LOGGER.warn("POST request rejected, request size of " + requestSize + " too large.");
-                ExceptionReport er = new ExceptionReport("Request body too large, limited to " + MAXIMUM_REQUEST_SIZE
+                ExceptionReport er = new ExceptionReport("Request body too large, limited to "
+                        + WPSConfig.MAXIMUM_REQUEST_SIZE
                         + " bytes", ExceptionReport.NO_APPLICABLE_CODE);
                 handleException(er, res);
             }
@@ -329,7 +305,9 @@ public class WebProcessingService extends HttpRequestHandlerServlet implements H
             handleException(e, res);
         }
         catch (Exception e) {
-            ExceptionReport er = new ExceptionReport("Error handing request: " + e.getMessage(), ExceptionReport.NO_APPLICABLE_CODE, e);
+            ExceptionReport er = new ExceptionReport("Error handing request: " + e.getMessage(),
+                                                     ExceptionReport.NO_APPLICABLE_CODE,
+                                                     e);
             handleException(er, res);
         }
         finally {
@@ -343,21 +321,12 @@ public class WebProcessingService extends HttpRequestHandlerServlet implements H
         }
     }
 
-    @Override
-    protected void service(HttpServletRequest req, HttpServletResponse res) throws ServletException, IOException {
-        if (SERVLET_PATH == null) {
-            req.getContextPath();
-        }
-        super.service(req, res);
-    }
-
     private static void handleException(ExceptionReport exception, HttpServletResponse res) {
         res.setContentType(XML_CONTENT_TYPE);
         try {
             LOGGER.debug(exception.toString());
             // DO NOT MIX getWriter and getOuputStream!
-            exception.getExceptionDocument().save(res.getOutputStream(),
-                                                  XMLBeansHelper.getXmlOptions());
+            exception.getExceptionDocument().save(res.getOutputStream(), XMLBeansHelper.getXmlOptions());
 
             res.setStatus(HttpServletResponse.SC_OK);
         }
@@ -375,18 +344,10 @@ public class WebProcessingService extends HttpRequestHandlerServlet implements H
     }
 
     @Override
-    public void destroy() {
-        super.destroy();
+    protected void finalize() throws Throwable {
+        LOGGER.debug("Finalizing {}", this);
+        super.finalize();
         DatabaseFactory.getDatabase().shutdown();
     }
 
-	@Override
-	public void handleRequest(HttpServletRequest request,
-			HttpServletResponse response) throws ServletException, IOException {
-		if(request.getMethod().equals("GET")){
-			doGet(request, response);
-		}else if(request.getMethod().equals("POST")){
-			doPost(request, response);
-		}		
-	}
 }

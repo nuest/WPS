@@ -40,7 +40,6 @@ import java.util.Collection;
 import java.util.HashMap;
 import java.util.List;
 
-import org.n52.wps.ServerDocument.Server;
 import org.n52.wps.commons.WPSConfig;
 import org.n52.wps.server.ExceptionReport;
 import org.n52.wps.server.WebProcessingService;
@@ -108,7 +107,7 @@ public class R_Config {
         this.connector = new RConnector(starter);
 
         try {
-            String wpsBasedir = WebProcessingService.BASE_DIR;
+            String wpsBasedir = WebProcessingService.getApplicationBaseDir();
             if (wpsBasedir != null) {
                 File f = new File(wpsBasedir, R_BASE_DIR);
                 String baseDirFull = f.getAbsolutePath();
@@ -146,7 +145,7 @@ public class R_Config {
             throw new ExceptionReport("Config variable is not set!", "Inconsistent property");
         File testFile = new File(path);
         if ( !testFile.isAbsolute()) {
-            testFile = new File(WebProcessingService.BASE_DIR, path);
+            testFile = new File(WebProcessingService.getApplicationBaseDir(), path);
         }
         if ( !testFile.exists())
             throw new ExceptionReport("Invalid config property of name \"" + key + "\" and value \"" + path
@@ -157,12 +156,12 @@ public class R_Config {
 
     public URL getSessionInfoURL() throws MalformedURLException {
         // FIXME implement service endpoint to retrieve r session information
-        return new URL(getUrlPathUpToWebapp() + "/not_supported");
+        return new URL(WPSConfig.getInstance().getServiceBaseUrl() + "/not_supported");
     }
 
     // FIXME this should use generic WPS methods to get the URL
     public String getResourceDirURL() {
-        String webapp = getUrlPathUpToWebapp();
+        String webapp = WPSConfig.getInstance().getServiceBaseUrl();
         String resourceDirectory = getResourceDirectory();
 
         // important: this url should be appendable with a resource name, i.e. either end in "/" or "id="
@@ -194,21 +193,12 @@ public class R_Config {
                 return null;
             }
             else {
-                URL url = new URL(getUrlPathUpToWebapp() + "/" + f.toString().replace("\\", "/"));
+                URL url = new URL(WPSConfig.getInstance().getServiceBaseUrl() + "/" + f.toString().replace("\\", "/"));
                 return url;
             }
         }
 
         return null;
-    }
-
-    private String getUrlPathUpToWebapp() {
-        Server server = WPSConfig.getInstance().getWPSConfig().getServer();
-        String host = server.getHostname();
-        String port = server.getHostport();
-        String webapppath = server.getWebappPath();
-
-        return "http://" + host + ":" + port + "/" + webapppath;
     }
 
     public URL getOutputFileURL(String currentWorkdir, String filename) throws IOException {
@@ -219,8 +209,8 @@ public class R_Config {
             throw new IOException("Error in creating URL: " + currentWorkdir + " / " + path + " not found or broken.");
 
         // create URL
-        path = path.substring(WebProcessingService.BASE_DIR.length() + 1, path.length());
-        String urlString = getUrlPathUpToWebapp() + "/" + path;
+        path = path.substring(WebProcessingService.getApplicationBaseDir().length() + 1, path.length());
+        String urlString = WPSConfig.getInstance().getServiceBaseUrl() + "/" + path;
 
         return new URL(urlString);
     }
@@ -335,7 +325,7 @@ public class R_Config {
         for (String s : scriptDirs) {
             File dir = new File(s);
             if ( !dir.isAbsolute())
-                dir = new File(WebProcessingService.BASE_DIR, s);
+                dir = new File(WebProcessingService.getApplicationBaseDir(), s);
 
             scriptDirectories.add(dir);
             LOGGER.debug("Found script directory: {}", dir);
@@ -469,7 +459,8 @@ public class R_Config {
     }
 
     public URL getProcessDescriptionURL(String processWKN) {
-        String s = getUrlPathUpToWebapp() + "/WebProcessingService?Request=DescribeProcess&identifier=" + processWKN;
+        String s = WPSConfig.getInstance().getServiceBaseUrl()
+                + "/WebProcessingService?Request=DescribeProcess&identifier=" + processWKN;
         try {
             return new URL(s);
         }

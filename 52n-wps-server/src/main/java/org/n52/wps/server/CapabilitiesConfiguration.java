@@ -31,7 +31,6 @@ package org.n52.wps.server;
 
 import java.io.File;
 import java.io.IOException;
-import java.net.InetAddress;
 import java.net.MalformedURLException;
 import java.net.URL;
 import java.net.UnknownHostException;
@@ -74,7 +73,7 @@ public class CapabilitiesConfiguration {
 
     private static CapabilitiesSkeletonLoadingStrategy loadingStrategy;
 
-    public static String ENDPOINT_URL;
+    // public static String ENDPOINT_URL;
 
     private CapabilitiesConfiguration() {
         /* nothing here */
@@ -239,11 +238,11 @@ public class CapabilitiesConfiguration {
      *         if the local host name can not be obtained
      */
     private static void initSkeleton(CapabilitiesDocument skel) throws UnknownHostException {
-        ENDPOINT_URL = getEndpointURL();
+        String endpointUrl = getEndpointURL();
         if (skel.getCapabilities() == null) {
             skel.addNewCapabilities();
         }
-        initOperationsMetadata(skel, ENDPOINT_URL);
+        initOperationsMetadata(skel, endpointUrl);
         initProcessOfferings(skel);
     }
 
@@ -313,21 +312,7 @@ public class CapabilitiesConfiguration {
      */
     private static String getEndpointURL() throws UnknownHostException {
         WPSConfig config = WPSConfig.getInstance();
-        String host = config.getWPSConfig().getServer().getHostname();
-        String port = config.getWPSConfig().getServer().getHostport();
-        if (host == null) {
-            host = InetAddress.getLocalHost().getCanonicalHostName();
-        }
-
-        StringBuilder url = new StringBuilder();
-        // TODO what if this service runs on HTTPS?
-        url.append("http").append("://").append(host);
-        url.append(':').append(port).append('/');
-        if (WebProcessingService.WEBAPP_PATH != null && !WebProcessingService.WEBAPP_PATH.isEmpty()) {
-            url.append(WebProcessingService.WEBAPP_PATH).append('/');
-        }
-        url.append(WebProcessingService.SERVLET_PATH);
-        return url.toString();
+        return config.getServiceEndpoint();
     }
 
     /**

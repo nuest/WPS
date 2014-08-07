@@ -26,6 +26,7 @@
  * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the GNU General
  * Public License for more details.
  */
+
 package org.n52.wps.server;
 
 import java.io.IOException;
@@ -34,9 +35,7 @@ import java.io.OutputStream;
 import java.io.PrintWriter;
 import java.util.UUID;
 
-import javax.servlet.ServletConfig;
 import javax.servlet.ServletException;
-import javax.servlet.http.HttpServlet;
 import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
 
@@ -48,53 +47,63 @@ import org.n52.wps.server.database.DatabaseFactory;
 import org.n52.wps.server.database.IDatabase;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-import org.springframework.web.HttpRequestHandler;
+import org.springframework.stereotype.Controller;
+import org.springframework.web.bind.annotation.RequestMapping;
+import org.springframework.web.bind.annotation.RequestMethod;
 
-public class RetrieveResultServlet extends HttpServlet implements HttpRequestHandler{
+/**
+ * 
+ * @author Daniel Nüst
+ *
+ */
+@Controller
+@RequestMapping(value = "/" + RetrieveResultServlet.SERVLET_PATH)
+public class RetrieveResultServlet {
 
     private final static Logger LOGGER = LoggerFactory.getLogger(RetrieveResultServlet.class);
-    private static final long serialVersionUID = -268198171054599696L;
+
     // This is required for URL generation for response documents.
     public final static String SERVLET_PATH = "RetrieveResultServlet";
-    // in future parameterize
+
+    // TODO: in future parameterize
     private final boolean indentXML = false;
-    
+
     private final int uuid_length = 36;
 
-    @Override
-    public void init(ServletConfig config) throws ServletException {
-        super.init(config);
+    public RetrieveResultServlet() {
+        LOGGER.debug("NEW {}", this);
     }
 
-    @Override
-    protected void doGet(HttpServletRequest request, HttpServletResponse response) throws ServletException, IOException {
+    @RequestMapping(method = RequestMethod.GET)
+    public void doGet(HttpServletRequest request, HttpServletResponse response) throws ServletException, IOException {
 
-		// id of result to retrieve.
-		String id = request.getParameter("id");
+        // id of result to retrieve.
+        String id = request.getParameter("id");
 
-		// optional alternate name for filename (rename the file when retrieving
-		// if requested)
-		boolean altName = false;
-		String alternateFilename = request.getParameter("filename");
-		if (!StringUtils.isEmpty(alternateFilename)) {
-			altName = true;
-		}
+        // optional alternate name for filename (rename the file when retrieving
+        // if requested)
+        boolean altName = false;
+        String alternateFilename = request.getParameter("filename");
+        if ( !StringUtils.isEmpty(alternateFilename)) {
+            altName = true;
+        }
 
         // return result as attachment (instructs browser to offer user "Save" dialog)
         String attachment = request.getParameter("attachment");
 
         if (StringUtils.isEmpty(id)) {
             errorResponse("id parameter missing", response);
-        } else {
+        }
+        else {
 
-        	if(!isIDValid(id)){
-        		errorResponse("id parameter not valid", response);
-        	}
-        	
+            if ( !isIDValid(id)) {
+                errorResponse("id parameter not valid", response);
+            }
+
             IDatabase db = DatabaseFactory.getDatabase();
             String mimeType = db.getMimeTypeForStoreResponse(id);
             long contentLength = db.getContentLengthForStoreResponse(id);
-            
+
             InputStream inputStream = null;
             OutputStream outputStream = null;
             try {
@@ -102,27 +111,31 @@ public class RetrieveResultServlet extends HttpServlet implements HttpRequestHan
 
                 if (inputStream == null) {
                     errorResponse("id " + id + " is unknown to server", response);
-                } else if (mimeType == null) {
+                }
+                else if (mimeType == null) {
                     errorResponse("Unable to determine mime-type for id " + id, response);
-                } else {
+                }
+                else {
                     String suffix = MIMEUtil.getSuffixFromMIMEType(mimeType).toLowerCase();
 
-                    // if attachment parameter unset, default to false for mime-type of 'xml' and true for everything else.
-					boolean useAttachment = (StringUtils.isEmpty(attachment) && !"xml".equals(suffix)) || Boolean.parseBoolean(attachment);
-					if (useAttachment) {
-						String attachmentName = (new StringBuilder(id)).append('.').append(suffix).toString();
+                    // if attachment parameter unset, default to false for mime-type of 'xml' and true for
+                    // everything else.
+                    boolean useAttachment = (StringUtils.isEmpty(attachment) && !"xml".equals(suffix))
+                            || Boolean.parseBoolean(attachment);
+                    if (useAttachment) {
+                        String attachmentName = (new StringBuilder(id)).append('.').append(suffix).toString();
 
-						if (altName) {
-							attachmentName = (new StringBuilder(alternateFilename)).append('.').append(suffix).toString();
-						}
-						response.addHeader("Content-Disposition", "attachment; filename=\"" + attachmentName + "\"");
-					}
+                        if (altName) {
+                            attachmentName = (new StringBuilder(alternateFilename)).append('.').append(suffix).toString();
+                        }
+                        response.addHeader("Content-Disposition", "attachment; filename=\"" + attachmentName + "\"");
+                    }
 
                     response.setContentType(mimeType);
 
                     if ("xml".equals(suffix)) {
 
-                        // NOTE:  We don't set "Content-Length" header, xml may be modified
+                        // NOTE: We don't set "Content-Length" header, xml may be modified
 
                         // need these to work around aggressive IE 8 caching.
                         response.addHeader("Cache-Control", "no-cache, no-store");
@@ -131,31 +144,38 @@ public class RetrieveResultServlet extends HttpServlet implements HttpRequestHan
 
                         try {
                             outputStream = response.getOutputStream();
-                        } catch (IOException e) {
+                        }
+                        catch (IOException e) {
                             throw new IOException("Error obtaining output stream for response", e);
                         }
                         copyResponseAsXML(inputStream, outputStream, useAttachment || indentXML, id);
-                    } else {
+                    }
+                    else {
 
                         if (contentLength > -1) {
-                            // Can't use response.setContentLength(...) as it accepts an int (max of 2^31 - 1) ?!
+                            // Can't use response.setContentLength(...) as it accepts an int (max of 2^31 - 1)
+                            // ?!
                             // response.setContentLength(contentLength);
                             response.setHeader("Content-Length", Long.toString(contentLength));
-                        } else {
+                        }
+                        else {
                             LOGGER.warn("Content-Length unknown for response to id {}", id);
                         }
 
                         try {
                             outputStream = response.getOutputStream();
-                        } catch (IOException e) {
+                        }
+                        catch (IOException e) {
                             throw new IOException("Error obtaining output stream for response", e);
                         }
                         copyResponseStream(inputStream, outputStream, id, contentLength);
                     }
                 }
-            } catch (Exception e) {
+            }
+            catch (Exception e) {
                 logException(e);
-            } finally {
+            }
+            finally {
                 IOUtils.closeQuietly(inputStream);
                 IOUtils.closeQuietly(outputStream);
             }
@@ -165,47 +185,46 @@ public class RetrieveResultServlet extends HttpServlet implements HttpRequestHan
     protected void errorResponse(String error, HttpServletResponse response) throws IOException {
         response.setContentType("text/html");
         response.setStatus(HttpServletResponse.SC_BAD_REQUEST);
-        PrintWriter writer = response.getWriter();
-        writer.write("<html><title>Error</title><body>" + error + "</body></html>");
-        writer.flush();
+        try (PrintWriter writer = response.getWriter();) {
+            writer.write("<html><title>Error</title><body>" + error + "</body></html>");
+            writer.flush();
+        }
         LOGGER.warn("Error processing response: " + error);
     }
 
-    protected void copyResponseStream(
-            InputStream inputStream,
-            OutputStream outputStream,
-            String id,
-            long contentLength) throws IOException {
+    protected void copyResponseStream(InputStream inputStream, OutputStream outputStream, String id, long contentLength) throws IOException {
         long contentWritten = 0;
         try {
             byte[] buffer = new byte[8192];
             int bufferRead;
-            while ((bufferRead = inputStream.read(buffer)) != -1) {
+            while ( (bufferRead = inputStream.read(buffer)) != -1) {
                 outputStream.write(buffer, 0, bufferRead);
                 contentWritten += bufferRead;
             }
-        } catch (IOException e) {
-            String exceptionMessage = contentLength > -1
-                    ? String.format("Error writing response to output stream for id %s, %d of %d bytes written", id, contentWritten, contentLength)
-                    : String.format("Error writing response to output stream for id %s, %d bytes written", id, contentWritten);
+        }
+        catch (IOException e) {
+            String exceptionMessage = contentLength > -1 ? String.format("Error writing response to output stream for id %s, %d of %d bytes written",
+                                                                         id,
+                                                                         contentWritten,
+                                                                         contentLength)
+                                                        : String.format("Error writing response to output stream for id %s, %d bytes written",
+                                                                        id,
+                                                                        contentWritten);
             throw new IOException(exceptionMessage, e);
         }
         LOGGER.info("{} bytes written in response to id {}", contentWritten, id);
     }
 
-    protected void copyResponseAsXML(
-            InputStream inputStream,
-            OutputStream outputStream,
-            boolean indent,
-            String id) throws IOException {
+    protected void copyResponseAsXML(InputStream inputStream, OutputStream outputStream, boolean indent, String id) throws IOException {
         try {
             XMLUtil.copyXML(inputStream, outputStream, indent);
-        } catch (IOException e) {
+        }
+        catch (IOException e) {
             throw new IOException("Error writing XML response for id " + id, e);
         }
     }
 
-    private void logException(Exception exception) {
+    private static void logException(Exception exception) {
         StringBuilder errorBuilder = new StringBuilder(exception.getMessage());
         Throwable cause = getRootCause(exception);
         if (cause != exception) {
@@ -217,54 +236,43 @@ public class RetrieveResultServlet extends HttpServlet implements HttpRequestHan
     public static Throwable getRootCause(Throwable t) {
         return t.getCause() == null ? t : getRootCause(t.getCause());
     }
-    
-    public boolean isIDValid(String id){    
-    	
-    	if(id.length() <= uuid_length){
-    		
+
+    public boolean isIDValid(String id) {
+
+        if (id.length() <= uuid_length) {
+
             try {
                 UUID checkUUID = UUID.fromString(id);
-                
-                if(checkUUID.toString().equals(id)){
-                	return true;
-                }else{
-                	return false;
+
+                if (checkUUID.toString().equals(id)) {
+                    return true;
                 }
-			} catch (Exception e) {
-            	return false;
-			}
-    		
-    	}else {
-    		
-    		String uuidPartOne = id.substring(0, uuid_length);
-    		String uuidPartTwo = id.substring(id.length() - uuid_length, id.length());
-    		
-    		return isUUIDValid(uuidPartOne) && isUUIDValid(uuidPartTwo);    		
-    	}
+                return false;
+            }
+            catch (Exception e) {
+                return false;
+            }
+        }
+        String uuidPartOne = id.substring(0, uuid_length);
+        String uuidPartTwo = id.substring(id.length() - uuid_length, id.length());
+
+        return isUUIDValid(uuidPartOne) && isUUIDValid(uuidPartTwo);
     }
-    
-	public boolean isUUIDValid(String uuid) {
 
-		// the following can be used to check whether the id is a valid UUID
-		try {
-			UUID checkUUID = UUID.fromString(uuid);
+    public boolean isUUIDValid(String uuid) {
 
-			if (checkUUID.toString().equals(uuid)) {
-				return true;
-			} else {
-				return false;
-			}
-		} catch (Exception e) {
-			return false;
-		}
-	}
+        // the following can be used to check whether the id is a valid UUID
+        try {
+            UUID checkUUID = UUID.fromString(uuid);
 
-	@Override
-	public void handleRequest(HttpServletRequest request,
-			HttpServletResponse response) throws ServletException, IOException {
-		if(request.getMethod().equals("GET")){
-			doGet(request, response);
-		}
-		
-	}
+            if (checkUUID.toString().equals(uuid)) {
+                return true;
+            }
+            return false;
+        }
+        catch (Exception e) {
+            return false;
+        }
+    }
+
 }
