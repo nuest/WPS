@@ -78,7 +78,7 @@ public class WPSConfig implements Serializable {
 
     public static final String CAPABILITES_SKELETON_NAME = "wpsCapabilitiesSkeleton.xml";
 
-    public static final String SERVLET_PATH = "WebProcessingService";
+    public static final String WPS_SERVLET_PATH = "WebProcessingService";
 
     public static final String WPS_NAMESPACE = "http://www.opengis.net/wps/1.0.0";
 
@@ -458,7 +458,7 @@ public class WPSConfig implements Serializable {
     }
 
     public String getServiceEndpoint() {
-        String endpoint = getServiceBaseUrl() + "/" + WPSConfig.SERVLET_PATH;
+        String endpoint = getServiceBaseUrl() + "/" + WPSConfig.WPS_SERVLET_PATH;
         return endpoint;
     }
 

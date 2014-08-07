@@ -60,6 +60,7 @@ import org.n52.wps.util.XMLBeansHelper;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.http.MediaType;
 import org.springframework.stereotype.Controller;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestMethod;
@@ -71,7 +72,7 @@ import org.springframework.web.bind.annotation.RequestMethod;
  *
  */
 @Controller
-@RequestMapping("/" + WPSConfig.SERVLET_PATH)
+@RequestMapping("/" + WPSConfig.WPS_SERVLET_PATH)
 public class WebProcessingService {
 
     public static String DEFAULT_LANGUAGE = "en-US";
@@ -133,8 +134,8 @@ public class WebProcessingService {
         LOGGER.info("Initialized {}", database);
 
         try {
-            String capsConfigPath = getApplicationBaseDir() + File.separator + WPSConfig.CONFIG_FILE_DIR + File.separator
-                    + WPSConfig.CAPABILITES_SKELETON_NAME;
+            String capsConfigPath = getApplicationBaseDir() + File.separator + WPSConfig.CONFIG_FILE_DIR
+                    + File.separator + WPSConfig.CAPABILITES_SKELETON_NAME;
             CapabilitiesDocument capsDoc = CapabilitiesConfiguration.getInstance(capsConfigPath);
             LOGGER.info("Initialized capabilities document:\n{}", capsDoc);
         }
@@ -148,60 +149,44 @@ public class WebProcessingService {
         // FvK: added Property Change Listener support
         // creates listener and register it to the wpsConfig instance.
         // it will listen to changes of the wpsCapabilities
-        conf.addPropertyChangeListener(org.n52.wps.commons.WPSConfig.WPSCAPABILITIES_SKELETON_PROPERTY_EVENT_NAME,
-                                                          new PropertyChangeListener() {
-                                                              @Override
-                                                              public void propertyChange(final PropertyChangeEvent propertyChangeEvent) {
-                                                                  LOGGER.info(this.getClass().getName()
-                                                                          + ": Received Property Change Event: "
-                                                                          + propertyChangeEvent.getPropertyName());
-                                                                  try {
-                                                                      CapabilitiesConfiguration.reloadSkeleton();
-                                                                  }
-                                                                  catch (IOException e) {
-                                                                      LOGGER.error("error while initializing capabilitiesConfiguration",
-                                                                                   e);
-                                                                  }
-                                                                  catch (XmlException e) {
-                                                                      LOGGER.error("error while initializing capabilitiesConfiguration",
-                                                                                   e);
-                                                                  }
-                                                              }
-                                                          });
+        conf.addPropertyChangeListener(WPSConfig.WPSCAPABILITIES_SKELETON_PROPERTY_EVENT_NAME,
+                                       new PropertyChangeListener() {
+                                           @Override
+                                           public void propertyChange(final PropertyChangeEvent propertyChangeEvent) {
+                                               LOGGER.info("{}: Received Property Change Event: {}",
+                                                           this.getClass().getName(),
+                                                           propertyChangeEvent.getPropertyName());
+                                               try {
+                                                   CapabilitiesConfiguration.reloadSkeleton();
+                                               }
+                                               catch (IOException | XmlException e) {
+                                                   LOGGER.error("error while initializing capabilitiesConfiguration", e);
+                                               }
+                                           }
+                                       });
 
         // FvK: added Property Change Listener support
         // creates listener and register it to the wpsConfig instance.
         // it will listen to changes of the wpsConfiguration
-        conf.addPropertyChangeListener(org.n52.wps.commons.WPSConfig.WPSCONFIG_PROPERTY_EVENT_NAME,
-                                                          new PropertyChangeListener() {
-                                                              public void propertyChange(final PropertyChangeEvent propertyChangeEvent) {
-                                                                  LOGGER.info(this.getClass().getName()
-                                                                          + ": Received Property Change Event: "
-                                                                          + propertyChangeEvent.getPropertyName());
-                                                                  try {
-                                                                      CapabilitiesConfiguration.reloadSkeleton();
-                                                                  }
-                                                                  catch (IOException e) {
-                                                                      LOGGER.error("error while initializing capabilitiesConfiguration",
-                                                                                   e);
-                                                                  }
-                                                                  catch (XmlException e) {
-                                                                      LOGGER.error("error while initializing capabilitiesConfiguration",
-                                                                                   e);
-                                                                  }
-                                                              }
-                                                          });
+        conf.addPropertyChangeListener(WPSConfig.WPSCONFIG_PROPERTY_EVENT_NAME, new PropertyChangeListener() {
+            public void propertyChange(final PropertyChangeEvent propertyChangeEvent) {
+                LOGGER.info("{}: Received Property Change Event: {}",
+                            this.getClass().getName(),
+                            propertyChangeEvent.getPropertyName());
+                try {
+                    CapabilitiesConfiguration.reloadSkeleton();
+                }
+                catch (IOException | XmlException e) {
+                    LOGGER.error("error while initializing capabilitiesConfiguration", e);
+                }
+            }
+        });
 
         LOGGER.info("*** WPS up and running! ***");
     }
 
     public static String getApplicationBaseDir() {
         return applicationBaseDir;
-    }
-
-    @RequestMapping(value = "/test")
-    public String getFallback() {
-        return "Fallback for GET Requests";
     }
 
     @RequestMapping(method = RequestMethod.GET)
@@ -245,8 +230,7 @@ public class WebProcessingService {
             if (contentLength > WPSConfig.MAXIMUM_REQUEST_SIZE) {
                 LOGGER.warn("POST request rejected, request size of " + contentLength + " too large.");
                 ExceptionReport er = new ExceptionReport("Request body too large, limited to "
-                        + WPSConfig.MAXIMUM_REQUEST_SIZE
-                        + " bytes", ExceptionReport.NO_APPLICABLE_CODE);
+                        + WPSConfig.MAXIMUM_REQUEST_SIZE + " bytes", ExceptionReport.NO_APPLICABLE_CODE);
                 handleException(er, res);
             }
 
@@ -264,22 +248,20 @@ public class WebProcessingService {
                 requestSize += read;
             }
 
-            LOGGER.debug("POST request contained  " + requestSize + " characters");
+            LOGGER.debug("POST request contained {} characters.", requestSize);
 
             // Protect against denial of service attacks.
             if (requestSize >= WPSConfig.MAXIMUM_REQUEST_SIZE && reader.read() > -1) {
-                LOGGER.warn("POST request rejected, request size of " + requestSize + " too large.");
+                LOGGER.warn("POST request rejected, request size of {} too large.", requestSize);
                 ExceptionReport er = new ExceptionReport("Request body too large, limited to "
-                        + WPSConfig.MAXIMUM_REQUEST_SIZE
-                        + " bytes", ExceptionReport.NO_APPLICABLE_CODE);
+                        + WPSConfig.MAXIMUM_REQUEST_SIZE + " bytes", ExceptionReport.NO_APPLICABLE_CODE);
                 handleException(er, res);
             }
 
             String documentString = writer.toString();
 
             // Perform URL decoding, if necessary
-            // if ("application/x-www-form-urlencoded".equals(contentType)) {
-            if ( (contentType).startsWith("application/x-www-form-urlencoded")) {
+            if ( (contentType).startsWith(MediaType.APPLICATION_FORM_URLENCODED_VALUE)) {
                 if (documentString.startsWith(SPECIAL_XML_POST_VARIABLE + "=")) {
                     // This is a hack to permit xml to be easily submitted via a form POST.
                     // By convention, we are allowing users to post xml if they name it
@@ -289,7 +271,7 @@ public class WebProcessingService {
                     LOGGER.debug("POST request form variable removed");
                 }
                 documentString = URLDecoder.decode(documentString, characterEncoding);
-                LOGGER.debug("Decoded of POST:\n" + documentString + "\n");
+                LOGGER.debug("Decoded POST request:\n{}\n", documentString);
             }
 
             RequestHandler handler = new RequestHandler(new ByteArrayInputStream(documentString.getBytes("UTF-8")),
