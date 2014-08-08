@@ -600,6 +600,7 @@
 			<Property name="R_enableBatchStart" active="true">true</Property>
 			<Property name="R_datatypeConfig" active="true">R/R_Datatype.conf</Property>
 			<Property name="R_wdStrategy" active="true">default</Property>
+			<Property name="R_wdCleanUp" active="true">true</Property>
 			<Property name="R_wdName" active="false">myName</Property>
 			<Property name="R_resourceDirectory" active="true">R/resources</Property>
 			<Property name="R_RserveHost" active="true">localhost</Property>

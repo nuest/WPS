@@ -75,11 +75,6 @@ public class RWorkspaceManager {
 
     private FilteredRConnection connection;
 
-    /**
-     * Indicates if the WPS working directory should be deleted after process execution
-     */
-    private boolean deleteWPSWorkDirectory = true;
-
     private RExecutor executor;
 
     private RIOHandler iohandler;
@@ -96,12 +91,30 @@ public class RWorkspaceManager {
         log.debug("NEW {}", this);
     }
 
+    public void cleanUp(String originalWorkDir) {
+        boolean b = Boolean.valueOf(this.config.getConfigVariable(RWPSConfigVariables.R_CLEAN_UP_WORK_DIR));
+        if (b) {
+            log.debug("Cleaning up workspace and resetting workdir at {}", this.workspace);
+            cleanUpInR();
+            cleanUpWithWPS();
+        }
+        else
+            log.debug("NOT cleaning up workspace, output left intact at {}", this.workspace);
+
+        try {
+            this.workspace.resetWorkingDirectory(connection, originalWorkDir);
+        }
+        catch (RserveException e) {
+            log.error("Could not reset working directory to {}", originalWorkDir, e);
+        }
+    }
+
     /**
      * 
      * @param originalWorkDir
      *        the working directory of R after the clean up is finished
      */
-    public void cleanUpInR(String originalWorkDir) {
+    private void cleanUpInR() {
         log.debug("Cleaning up workspace from R ...");
         // R_Config config = R_Config.getInstance();
         // RConnection connection = rCon;
@@ -113,29 +126,26 @@ public class RWorkspaceManager {
         RLogger.log(connection, "Workspace after process run:");
         RLogger.logWorkspaceContent(this.connection);
 
-        log.debug("Deleting work directory {}", originalWorkDir);
-        boolean b = this.workspace.deleteCurrentAndSetWorkdir(this.connection, originalWorkDir);
+        boolean b = this.workspace.deleteCurrentWorkdir(this.connection);
         if ( !b)
             log.debug("Could not delete workdir (completely) with R, remaining files: {}", this.workspace.listFiles());
     }
 
-    public void cleanUpWithWPS() {
+    private void cleanUpWithWPS() {
         log.debug("Cleaning up workspace from Java ...");
 
         try {
-            if (this.deleteWPSWorkDirectory) {
-                // try to delete current local workdir - folder
-                File workdir = new File(workspace.getPath());
+            // try to delete current local workdir - folder
+            File workdir = new File(workspace.getPath());
 
-                if ( !workdir.exists())
-                    return;
+            if ( !workdir.exists())
+                return;
 
-                boolean deleted = deleteRecursive(workdir);
-                if ( !deleted)
-                    log.warn("Failed to delete temporary WPS Workdirectory '{}', remaining files: {}",
-                             workdir.getAbsolutePath(),
-                             this.workspace.listFiles());
-            }
+            boolean deleted = deleteRecursive(workdir);
+            if ( !deleted)
+                log.warn("Failed to delete temporary WPS Workdirectory '{}', remaining files: {}",
+                         workdir.getAbsolutePath(),
+                         this.workspace.listFiles());
         }
         catch (Exception e) {
             log.error("Problem deleting the wps work directory.", e);
@@ -354,17 +364,7 @@ public class RWorkspaceManager {
         // Set R working directory according to configuration
         String strategy = this.config.getConfigVariable(RWPSConfigVariables.R_WORK_DIR_STRATEGY);
         boolean isRserveOnLocalhost = this.config.getRServeHost().equalsIgnoreCase("localhost");
-        String workDirNameSetting = null;
-
-        try {
-            workDirNameSetting = this.config.getConfigVariableFullPath(RWPSConfigVariables.R_WORK_DIR_NAME);
-        }
-        catch (ExceptionReport e) {
-            log.error("The config variable {} references a non-existing directory. This will be an issue if the variable is used. The current strategy is '{}'.",
-                      RWPSConfigVariables.R_WORK_DIR_NAME,
-                      strategy,
-                      e);
-        }
+        String workDirNameSetting = this.config.getConfigVariable(RWPSConfigVariables.R_WORK_DIR_NAME);
 
         this.workspace.setWorkingDirectory(this.connection,
                                            originalWD,
@@ -489,13 +489,15 @@ public class RWorkspaceManager {
     public String toString() {
         StringBuilder builder = new StringBuilder();
         builder.append("RWorkspaceManager [");
+        if (workspace != null) {
+            builder.append("workspace=");
+            builder.append(workspace);
+        }
         if (connection != null) {
             builder.append("connection=");
             builder.append(connection);
             builder.append(", ");
         }
-        builder.append("deleteWPSWorkDirectory=");
-        builder.append(deleteWPSWorkDirectory);
         builder.append(", ");
         if (executor != null) {
             builder.append("executor=");
@@ -506,10 +508,6 @@ public class RWorkspaceManager {
             builder.append("iohandler=");
             builder.append(iohandler);
             builder.append(", ");
-        }
-        if (workspace != null) {
-            builder.append("workspace=");
-            builder.append(workspace);
         }
         builder.append("]");
         return builder.toString();

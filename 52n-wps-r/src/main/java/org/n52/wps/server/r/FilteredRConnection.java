@@ -68,6 +68,7 @@ public class FilteredRConnection extends RConnection {
      * 
      * "";quit("no"); does not start with quit, so check with contains.
      */
+    @SuppressWarnings("unused")
     private class BlacklistFilter implements RCommandFilter {
 
         private HashSet<String> illegalCommands = new HashSet<String>();

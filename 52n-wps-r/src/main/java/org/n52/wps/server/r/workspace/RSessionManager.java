@@ -269,4 +269,24 @@ public class RSessionManager {
         return result;
     }
 
+    @Override
+    public String toString() {
+        StringBuilder builder = new StringBuilder();
+        builder.append("RSessionManager [");
+        if (connection != null) {
+            builder.append("connection=");
+            builder.append(connection);
+            builder.append(", ");
+        }
+        builder.append("cleanOnStartup=");
+        builder.append(cleanOnStartup);
+        builder.append(", ");
+        if (config != null) {
+            builder.append("config=");
+            builder.append(config);
+        }
+        builder.append("]");
+        return builder.toString();
+    }
+
 }

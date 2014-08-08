@@ -40,6 +40,7 @@ import java.util.Date;
 import java.util.UUID;
 
 import org.n52.wps.server.ExceptionReport;
+import org.n52.wps.server.WebProcessingService;
 import org.n52.wps.server.r.FilteredRConnection;
 import org.n52.wps.server.r.RWPSConfigVariables;
 import org.n52.wps.server.r.util.RLogger;
@@ -137,7 +138,7 @@ public class RWorkspace {
     /**
      * @return true if the unlink call was made successfully
      */
-    public boolean deleteCurrentAndSetWorkdir(RConnection connection, String originalWorkDir) {
+    protected boolean deleteCurrentWorkdir(RConnection connection) {
         if (this.wpsWorkDirIsRWorkDir && !connection.isConnected()) {
             // R won't delete the folder if it is the same as the wps work directory
             log.warn("Cannot delete directory, connection is not connected or workdir is WPS workdir ({}).",
@@ -154,10 +155,7 @@ public class RWorkspace {
         if (this.path != null) {
             try {
                 RLogger.log(connection, "Deleting workspace.");
-
                 String wdToDelete = connection.eval("getwd()").asString();
-                REXP oldwd = setwd(connection, originalWorkDir);
-                log.debug("Set wd to {} (was: {})", oldwd.toDebugString(), wdToDelete);
 
                 // should be true usually, if not, workdirectory has been changed unexpectedly (probably
                 // inside script)
@@ -199,6 +197,8 @@ public class RWorkspace {
     private REXP setwd(RConnection connection, String wd) throws RserveException {
         String wdString = wd.replace("\\", "/");
         REXP oldWorkdir = connection.eval("setwd(\"" + wdString + "\")");
+
+        log.debug("Set wd to {} (was: {})", wd, oldWorkdir.toDebugString());
         return oldWorkdir;
     }
 
@@ -211,7 +211,6 @@ public class RWorkspace {
      * on a remote machine requires separate working directories for WPS and R.
      * 
      * @param connection
-     * @param workDirName
      * 
      * @return the new working directory, which is already set.
      */
@@ -236,6 +235,32 @@ public class RWorkspace {
         }
 
         CreationStrategy strategy = CreationStrategy.valueOf(strategyName.trim().toUpperCase());
+
+        // if one of these strategies is used, then Java must be able to write in the folder and we need the
+        // full path
+        String workDirNameFullPath = null;
+        if (strategy.equals(CreationStrategy.MANUALBASEDIR) || strategy.equals(CreationStrategy.MANUAL)) {
+            try {
+                if (workDirName == null)
+                    throw new ExceptionReport("Config variable is not set!", "Inconsistent property");
+                File testFile = new File(workDirName);
+                if ( !testFile.isAbsolute()) {
+                    testFile = new File(WebProcessingService.BASE_DIR, path);
+                }
+                if ( !testFile.exists())
+                    throw new ExceptionReport("Invalid work dir name \"" + workDirName + "\" and full path \""
+                            + testFile.getPath() + "\". It denotes a non-existent path.", "Inconsistent property");
+
+                workDirNameFullPath = testFile.getAbsolutePath();
+                log.debug("Manually set work dir name resolved to the full path '{}'", workDirNameFullPath);
+            }
+            catch (ExceptionReport e) {
+                log.error("The config variable {} references a non-existing directory. This will be an issue if the variable is used. The current strategy is '{}'.",
+                          RWPSConfigVariables.R_WORK_DIR_NAME,
+                          strategy,
+                          e);
+            }
+        }
 
         if (strategy.equals(DEFAULT_STRATEGY)) {
             // Default behaviour: R work directory is the same as temporary WPS work directory if R runs
@@ -278,21 +303,21 @@ public class RWorkspace {
         }
         else if (strategy.equals(CreationStrategy.MANUAL)) {
             // in the manual strategy, the path is simply used
-            if (workDirName != null && !workDirName.isEmpty())
-                oldWorkdir = setwd(connection, workDirName);
+            if (workDirNameFullPath != null && !workDirNameFullPath.isEmpty())
+                oldWorkdir = setwd(connection, workDirNameFullPath);
             else {
                 log.error("Work directory name is not provided, falling back to default strategy.");
                 return setWorkingDirectory(connection,
                                            currentWorkDir,
                                            DEFAULT_STRATEGY.toString(),
                                            isRserveOnLocalhost,
-                                           workDirName);
+                                           workDirNameFullPath);
             }
         }
         else if (strategy.equals(CreationStrategy.MANUALBASEDIR)) {
             // in the manualBaseDir strategy, the defined path is used as the base directory for random
             // workspace names
-            File f = new File(workDirName);
+            File f = new File(workDirNameFullPath);
 
             boolean isInvalidPath = false;
             if (isRserveOnLocalhost) {
@@ -318,13 +343,13 @@ public class RWorkspace {
                           RWPSConfigVariables.R_WORK_DIR_STRATEGY,
                           strategy,
                           RWPSConfigVariables.R_WORK_DIR_NAME,
-                          workDirName,
+                          workDirNameFullPath,
                           DEFAULT_STRATEGY);
                 return setWorkingDirectory(connection,
                                            currentWorkDir,
                                            DEFAULT_STRATEGY.toString(),
                                            isRserveOnLocalhost,
-                                           workDirName);
+                                           workDirNameFullPath);
             }
         }
 
@@ -343,6 +368,10 @@ public class RWorkspace {
         String workDirPath = newWorkdir.asString();
         this.path = workDirPath;
         return getPath();
+    }
+
+    public void resetWorkingDirectory(RConnection connection, String wd) throws RserveException {
+        setwd(connection, wd);
     }
 
     public Collection<File> listFiles() {
