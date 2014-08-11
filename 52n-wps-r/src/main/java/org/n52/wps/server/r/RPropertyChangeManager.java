@@ -409,7 +409,7 @@ public class RPropertyChangeManager implements PropertyChangeListener {
             else
                 LOGGER.info("Process {} and process file {} successfully deleted!", processName, processFile.getName());
         }
-        catch (Exception e) {
+        catch (RuntimeException | ExceptionReport e) {
             LOGGER.error("Process file refering to {} could not be deleted", processName, e);
         }
         return deleted;

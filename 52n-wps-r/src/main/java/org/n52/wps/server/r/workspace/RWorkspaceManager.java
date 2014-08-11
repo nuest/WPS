@@ -147,7 +147,7 @@ public class RWorkspaceManager {
                          workdir.getAbsolutePath(),
                          this.workspace.listFiles());
         }
-        catch (Exception e) {
+        catch (RuntimeException e) {
             log.error("Problem deleting the wps work directory.", e);
         }
     }

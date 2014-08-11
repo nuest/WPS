@@ -96,7 +96,7 @@ public class RConnector {
                 try {
                     con = attemptStarts(host, port, START_ATTEMP_COUNT);
                 }
-                catch (Exception e) {
+                catch (RuntimeException | InterruptedException | IOException e) {
                     log.error("Attempted to start Rserve and establish a connection failed", e);
                     rse.addSuppressed(e);
                 }

@@ -57,6 +57,7 @@ public class RWorkspace {
     public enum CreationStrategy {
         DEFAULT, MANUAL, MANUALBASEDIR, PRESET, TEMPORARY;
 
+        @Override
         public String toString() {
             return this.name().toLowerCase();
         }
@@ -106,10 +107,8 @@ public class RWorkspace {
             String wd = directory.getAbsolutePath();
             return setwd(connection, wd);
         }
-        else {
-            log.error("Could not create new temp workspace directory at {}", directory);
-            return null;
-        }
+        log.error("Could not create new temp workspace directory at {}", directory);
+        return null;
     }
 
     private REXP createAndSetNewWorkspaceDirectoryInRTempdir(RConnection connection) throws RserveException {
@@ -169,8 +168,8 @@ public class RWorkspace {
                             return true;
                         return false;
                     }
-                    else
-                        this.temporarilyPreventingRWorkingDirectoryFromDelete = false;
+
+                    this.temporarilyPreventingRWorkingDirectoryFromDelete = false;
                 }
                 else
                     log.warn("Unexpected R workdirectory at end of R session, check the R sript for unwanted workdirectory changes.");
