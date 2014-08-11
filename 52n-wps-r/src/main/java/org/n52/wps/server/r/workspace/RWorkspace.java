@@ -32,6 +32,7 @@ package org.n52.wps.server.r.workspace;
 import java.io.File;
 import java.io.FileInputStream;
 import java.io.IOException;
+import java.nio.file.Path;
 import java.text.SimpleDateFormat;
 import java.util.ArrayList;
 import java.util.Arrays;
@@ -40,9 +41,9 @@ import java.util.Date;
 import java.util.UUID;
 
 import org.n52.wps.server.ExceptionReport;
-import org.n52.wps.server.WebProcessingService;
 import org.n52.wps.server.r.FilteredRConnection;
 import org.n52.wps.server.r.RWPSConfigVariables;
+import org.n52.wps.server.r.R_Config;
 import org.n52.wps.server.r.util.RLogger;
 import org.rosuda.REngine.REXP;
 import org.rosuda.REngine.REXPMismatchException;
@@ -244,7 +245,8 @@ public class RWorkspace {
                     throw new ExceptionReport("Config variable is not set!", "Inconsistent property");
                 File testFile = new File(workDirName);
                 if ( !testFile.isAbsolute()) {
-                    testFile = new File(WebProcessingService.BASE_DIR, path);
+                    Path bd = R_Config.getInstance().getBaseDir();
+                    testFile = bd.resolve(path).toFile();
                 }
                 if ( !testFile.exists())
                     throw new ExceptionReport("Invalid work dir name \"" + workDirName + "\" and full path \""

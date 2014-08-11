@@ -34,6 +34,7 @@ import org.rosuda.REngine.REXPMismatchException;
 import org.rosuda.REngine.Rserve.RserveException;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpEntity;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.MediaType;
@@ -48,11 +49,10 @@ public class RResource {
 
     protected static Logger log = LoggerFactory.getLogger(RResource.class);
 
+    @Autowired
     private R_Config config;
 
     public RResource() {
-        this.config = R_Config.getInstance();
-
         log.debug("NEW {}", this);
     }
 
