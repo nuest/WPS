@@ -99,12 +99,13 @@ public class LocalRAlgorithmRepository implements ITransactionalAlgorithmReposit
     public void init() {
         LOGGER.info("Initializing Local*R*AlgorithmRepository");
 
+        changeManager.updateRepositoryConfiguration(); // loads config
+
         boolean startUpConditions = checkStartUpConditions();
         if (startUpConditions) {
-            CustomDataTypeManager.getInstance().update();
             // unregistered scripts from repository folder will be added as algorithm to WPSconfig
-            changeManager.updateRepositoryConfiguration();
 
+            CustomDataTypeManager.getInstance().update();
             addAllAlgorithmsToRepository();
         }
         else
