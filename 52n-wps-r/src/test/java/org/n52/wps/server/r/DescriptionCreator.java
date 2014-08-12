@@ -49,6 +49,7 @@ import org.n52.wps.server.r.syntax.RAnnotation;
 import org.n52.wps.server.r.syntax.RAnnotationException;
 import org.n52.wps.server.r.syntax.RAnnotationType;
 import org.n52.wps.server.r.syntax.RAttribute;
+import org.springframework.test.util.ReflectionTestUtils;
 
 public class DescriptionCreator {
 
@@ -57,7 +58,7 @@ public class DescriptionCreator {
 
     @BeforeClass
     public static void initConfig() {
-        config = R_Config.getInstance();
+        config = new R_Config();
     }
 
     @Before
@@ -67,7 +68,9 @@ public class DescriptionCreator {
 
         // GenericRProcess process = new GenericRProcess("R_andom");
         FileInputStream fis = new FileInputStream(scriptFile);
-        RAnnotationParser parser = new RAnnotationParser(config);
+        RAnnotationParser parser = new RAnnotationParser();
+        ReflectionTestUtils.setField(parser, "config", config);
+
         this.annotations = parser.parseAnnotationsfromScript(fis);
         fis.close();
     }
@@ -88,7 +91,7 @@ public class DescriptionCreator {
         testDoc.addNewProcessDescriptions().addNewProcessDescription().set(testType);
         // System.out.println(testDoc.xmlText());
 
-        ProcessDescriptionsDocument control = ProcessDescriptionsDocument.Factory.parse(descriptionFile);
+        ProcessDescriptionsDocument.Factory.parse(descriptionFile);
 
         // test process description manually
         String abstractString = null;

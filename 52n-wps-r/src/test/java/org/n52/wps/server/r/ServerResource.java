@@ -28,24 +28,32 @@
  */
 package org.n52.wps.server.r;
 
-import java.util.List;
+import static org.hamcrest.CoreMatchers.is;
+import static org.hamcrest.Matchers.equalTo;
+import static org.junit.Assert.assertThat;
+
+import java.net.MalformedURLException;
+import java.net.URL;
 
 import org.junit.Test;
-import org.n52.wps.server.r.info.RProcessInfo;
+import org.n52.wps.server.ExceptionReport;
+import org.n52.wps.server.r.syntax.RAnnotationException;
 
-public class ProcessInfo {
+/**
+ * 
+ * @author Daniel
+ *
+ */
+public class ServerResource {
+
+    private String wkn = "wkn.42";
 
     @Test
-    public void dummy()
-    {
-        List<RProcessInfo> rProcessInfoList = RProcessInfo.getRProcessInfoList();
-        for (RProcessInfo rProcessInfo : rProcessInfoList) {
-            rProcessInfo.getWkn();
-            rProcessInfo.isAvailable();
-            rProcessInfo.isValid();
-            rProcessInfo.getLastException().getMessage();
-            rProcessInfo.getScriptURL();
-        }
+    public void scriptUrlIsGenerated() throws RAnnotationException, ExceptionReport, MalformedURLException {
+        URL scriptURL = RResource.getScriptURL(wkn);
+
+        String expectedUrl = "http://localhost:8080/wps/script/" + wkn;
+        assertThat("script url is correct", scriptURL.toString(), is(equalTo(expectedUrl)));
     }
 
 }

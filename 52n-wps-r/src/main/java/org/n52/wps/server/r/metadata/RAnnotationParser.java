@@ -54,7 +54,10 @@ import org.n52.wps.server.r.syntax.RSeperator;
 import org.n52.wps.server.r.syntax.ResourceAnnotation;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.stereotype.Component;
 
+@Component
 public class RAnnotationParser {
 
     private static final String ANNOTATION_CHARACTER = "#";
@@ -63,10 +66,10 @@ public class RAnnotationParser {
 
     private static Logger LOGGER = LoggerFactory.getLogger(RAnnotationParser.class);
 
+    @Autowired
     private R_Config config;
 
-    public RAnnotationParser(R_Config config) {
-        this.config = config;
+    public RAnnotationParser() {
         LOGGER.debug("New {}", this);
     }
 

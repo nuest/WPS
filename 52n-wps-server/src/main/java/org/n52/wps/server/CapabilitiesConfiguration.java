@@ -34,6 +34,7 @@ import java.io.IOException;
 import java.net.MalformedURLException;
 import java.net.URL;
 import java.net.UnknownHostException;
+import java.util.List;
 import java.util.concurrent.locks.ReentrantLock;
 
 import net.opengis.ows.x11.CodeType;
@@ -198,7 +199,8 @@ public class CapabilitiesConfiguration {
      *         if an IO error occurs
      */
     public static CapabilitiesDocument getInstance() throws XmlException, IOException {
-        return getInstance( !WPSConfig.getInstance().getWPSConfig().getServer().getCacheCapabilites());
+        boolean cached = WPSConfig.getInstance().getWPSConfig().getServer().getCacheCapabilites();
+        return getInstance( !cached);
     }
 
     /**
@@ -255,8 +257,12 @@ public class CapabilitiesConfiguration {
     private static void initProcessOfferings(CapabilitiesDocument skel) {
         ProcessOfferings processes = skel.getCapabilities()
                 .addNewProcessOfferings();
-        for (String algorithmName : RepositoryManager.getInstance()
-                .getAlgorithms()) {
+        RepositoryManager rm = RepositoryManager.getInstance();
+        List<String> algorithms = rm.getAlgorithms();
+        if (algorithms.isEmpty())
+            LOG.warn("No algorithms found in repository manager.");
+
+        for (String algorithmName : algorithms) {
         	try {
         		ProcessDescriptionType description = RepositoryManager
                         .getInstance().getProcessDescription(algorithmName);
@@ -268,6 +274,7 @@ public class CapabilitiesConfiguration {
                     String processVersion = description.getProcessVersion();
                     process.setProcessVersion(processVersion);
                     process.setTitle(title);
+                    LOG.trace("Added algorithm to process offerings: {}\n\t\t{}", algorithmName, process);
                 }	
         	}
         	catch (RuntimeException e) {

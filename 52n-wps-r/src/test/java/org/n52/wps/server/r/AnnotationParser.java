@@ -26,6 +26,7 @@
  * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the GNU General
  * Public License for more details.
  */
+
 package org.n52.wps.server.r;
 
 import java.io.File;
@@ -43,6 +44,7 @@ import org.n52.wps.server.r.syntax.RAnnotationException;
 import org.n52.wps.server.r.syntax.RAnnotationType;
 import org.n52.wps.server.r.syntax.RAttribute;
 import org.n52.wps.server.r.syntax.ResourceAnnotation;
+import org.springframework.test.util.ReflectionTestUtils;
 
 public class AnnotationParser {
 
@@ -52,7 +54,7 @@ public class AnnotationParser {
 
     @BeforeClass
     public static void initConfig() {
-        config = R_Config.getInstance();
+        config = new R_Config();
     }
 
     @Before
@@ -61,7 +63,10 @@ public class AnnotationParser {
 
         // GenericRProcess process = new GenericRProcess("R_andom");
         FileInputStream fis = new FileInputStream(scriptFile);
-        RAnnotationParser parser = new RAnnotationParser(config);
+
+        RAnnotationParser parser = new RAnnotationParser();
+        ReflectionTestUtils.setField(parser, "config", config);
+
         this.annotations = parser.parseAnnotationsfromScript(fis);
         fis.close();
     }
