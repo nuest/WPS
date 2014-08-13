@@ -44,6 +44,7 @@ import net.opengis.wps.x100.ProcessDescriptionType;
 import org.n52.wps.io.data.IData;
 import org.n52.wps.server.AbstractObservableAlgorithm;
 import org.n52.wps.server.ExceptionReport;
+import org.n52.wps.server.r.data.RDataTypeRegistry;
 import org.n52.wps.server.r.metadata.RAnnotationParser;
 import org.n52.wps.server.r.metadata.RProcessDescriptionCreator;
 import org.n52.wps.server.r.syntax.RAnnotation;
@@ -59,39 +60,48 @@ import org.rosuda.REngine.Rserve.RserveException;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-//@Component("prototype")
 public class GenericRProcess extends AbstractObservableAlgorithm {
 
     private static Logger log = LoggerFactory.getLogger(GenericRProcess.class);
 
     private List<RAnnotation> annotations;
 
-    // @Autowired
     private R_Config config;
 
     private List<String> errors = new ArrayList<String>();
 
     private RExecutor executor = new RExecutor();
 
-    private RIOHandler iohandler = new RIOHandler();
+    private RIOHandler iohandler;
 
-    // @Autowired
     private RAnnotationParser parser;
 
     private boolean shutdownRServerAfterRun = false;
 
-    // @Autowired
     private ScriptFileRepository scriptFileRepository;
 
-    public GenericRProcess(String wellKnownName, R_Config config, RAnnotationParser parser, ScriptFileRepository repository) {
+    private ResourceFileRepository resourceRepository;
+
+    public GenericRProcess(String wellKnownName,
+                           R_Config config,
+                           RAnnotationParser parser,
+                           ScriptFileRepository scriptRepo,
+                           ResourceFileRepository resourceRepo,
+                           RDataTypeRegistry dataTypeRegistry) {
         super(wellKnownName, false);
         this.config = config;
         this.parser = parser;
-        this.scriptFileRepository = repository;
-        
+        this.scriptFileRepository = scriptRepo;
+        this.resourceRepository = resourceRepo;
+        this.iohandler = new RIOHandler(dataTypeRegistry);
+
         this.description = initializeDescription();
 
         log.debug("NEW {}", this);
+    }
+
+    public List<RAnnotation> getAnnotations() {
+        return annotations;
     }
 
     public List<String> getErrors() {
@@ -129,7 +139,7 @@ public class GenericRProcess extends AbstractObservableAlgorithm {
             this.annotations = this.parser.parseAnnotationsfromScript(rScriptStream);
 
             // submits annotation with process informations to ProcessdescriptionCreator:
-            RProcessDescriptionCreator creator = new RProcessDescriptionCreator(this.config);
+            RProcessDescriptionCreator creator = new RProcessDescriptionCreator(wkn);
             ProcessDescriptionType doc = creator.createDescribeProcessType(this.annotations,
                                                                            wkn,
                                                                            RResource.getScriptURL(wkn),
@@ -158,7 +168,7 @@ public class GenericRProcess extends AbstractObservableAlgorithm {
             RSessionManager session = new RSessionManager(rCon, config);
             session.configureSession(getWellKnownName(), executor);
 
-            RWorkspaceManager workspace = new RWorkspaceManager(rCon, this.iohandler, config);
+            RWorkspaceManager workspace = new RWorkspaceManager(rCon, iohandler, config, resourceRepository);
             String originalWorkDir = workspace.prepareWorkspace(inputData, getWellKnownName());
 
             List<RAnnotation> resAnnotList = RAnnotation.filterAnnotations(this.annotations, RAnnotationType.RESOURCE);

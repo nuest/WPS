@@ -69,7 +69,7 @@ public class R_Config implements ServletContextAware {
 
     public static final String SCRIPT_FILE_SUFFIX = "." + SCRIPT_FILE_EXTENSION;
 
-    public static final String WKN_PREFIX = "org.n52.wps.server.r.";
+    private static final String WKN_PREFIX = "org.n52.wps.server.r.";
 
     private static final String DEFAULT_RSERVE_HOST = "localhost";
 
@@ -135,21 +135,21 @@ public class R_Config implements ServletContextAware {
         return file.getAbsolutePath();
     }
 
-    // FIXME this should use generic WPS methods to get the URL
-    public String getResourceDirURL() {
-        String webapp = WPSConfig.getInstance().getServiceBaseUrl();
-        String resourceDirectory = getResourceDirectory();
+    public Collection<Path> getResourceDirectory() {
+        String resourceDirConfigParam = getConfigVariable(RWPSConfigVariables.RESOURCE_DIR);
+        Collection<Path> resourceDirectories = new ArrayList<Path>();
 
-        // important: this url should be appendable with a resource name, i.e. either end in "/" or "id="
-        if (webapp != null & resourceDirectory != null)
-            return webapp + "/" + resourceDirectory.replace("\\", "/") + "/";
+        String[] dirs = resourceDirConfigParam.split(DIR_DELIMITER);
+        for (String s : dirs) {
+            Path dir = Paths.get(s);
+            if ( !dir.isAbsolute())
+                dir = getBaseDir().resolve(s);
 
-        LOGGER.warn("Cannot create resource dir URL");
-        return null;
-    }
+            resourceDirectories.add(dir);
+            LOGGER.debug("Found script directory: {}", dir);
+        }
 
-    public String getResourceDirectory() {
-        return getConfigVariable(RWPSConfigVariables.RESOURCE_DIR);
+        return resourceDirectories;
     }
 
     public Collection<File> getScriptFiles() {
@@ -350,5 +350,9 @@ public class R_Config implements ServletContextAware {
     @Override
     public void setServletContext(ServletContext servletContext) {
         this.servletContext = servletContext;
+    }
+
+    public String getPublicScriptId(String s) {
+        return R_Config.WKN_PREFIX + s;
     }
 }

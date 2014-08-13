@@ -82,7 +82,7 @@ public class DescriptionCreator {
 
         // GenericRProcess process = new GenericRProcess("R_andom");
         FileInputStream fis = new FileInputStream(descriptionFile);
-        RProcessDescriptionCreator creator = new RProcessDescriptionCreator(config);
+        RProcessDescriptionCreator creator = new RProcessDescriptionCreator("org.n52.test---uniform");
         ProcessDescriptionType testType = creator.createDescribeProcessType(this.annotations,
                                                                             "R_andom",
                                                                             new URL("http://my.url/myScript.R"),
@@ -100,7 +100,7 @@ public class DescriptionCreator {
         for (RAnnotation anno : this.annotations) {
             if (anno.getType().equals(RAnnotationType.DESCRIPTION)) {
                 abstractString = anno.getStringValue(RAttribute.ABSTRACT);
-                identifierString = R_Config.WKN_PREFIX + anno.getStringValue(RAttribute.IDENTIFIER);
+                identifierString = config.getPublicScriptId(anno.getStringValue(RAttribute.IDENTIFIER));
                 titleString = anno.getStringValue(RAttribute.TITLE);
             }
         }

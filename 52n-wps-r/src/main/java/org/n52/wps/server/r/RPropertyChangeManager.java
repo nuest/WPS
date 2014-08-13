@@ -66,18 +66,14 @@ public class RPropertyChangeManager implements PropertyChangeListener {
     @Autowired
     private ScriptFileRepository fileRepository;
 
+    @Autowired
+    private CustomDataTypeManager dataTypeManager;
+
     public RPropertyChangeManager() {
         WPSConfig c = WPSConfig.getInstance();
         c.addPropertyChangeListener(WPSConfig.WPSCONFIG_PROPERTY_EVENT_NAME, this);
         LOGGER.info("NEW {}", this);
     }
-
-    // public static RPropertyChangeManager getInstance() {
-    // if (instance == null) {
-    // instance = new RPropertyChangeManager();
-    // }
-    // return instance;
-    // }
 
     @Override
     public void propertyChange(PropertyChangeEvent evt) {
@@ -88,7 +84,7 @@ public class RPropertyChangeManager implements PropertyChangeListener {
 
         LOGGER.info("Received PropertyChangeEvent: " + evt.getPropertyName());
         updateRepositoryConfiguration();
-        CustomDataTypeManager.getInstance().update();
+        dataTypeManager.update();
     }
 
     private class PropertyComparator implements Comparator<Property> {
@@ -155,7 +151,7 @@ public class RPropertyChangeManager implements PropertyChangeListener {
                 LOGGER.debug("NOT-algorithm property: " + property);
 
                 if (configVariableNames.contains(pname)) {
-                    boolean success = handleConfigVariable(property);
+                    boolean success = readAndStoreConfigVariable(property);
                     if ( !success)
                         LOGGER.warn("Invalid config variable was omitted and deleted: " + property);
 
@@ -170,11 +166,6 @@ public class RPropertyChangeManager implements PropertyChangeListener {
                 newPropertyList.add(property);
             }
         }
-
-        propertyChanged = checkMandatoryParameters(repositoryDocument,
-                                                   propertyChanged,
-                                                   newPropertyList,
-                                                   configVariableNames);
 
         propertyChanged = registerRScripts(repositoryDocument, algorithmPropertyHash, propertyChanged, newPropertyList);
 
@@ -311,71 +302,23 @@ public class RPropertyChangeManager implements PropertyChangeListener {
             catch (RAnnotationException | IOException | ExceptionReport e) {
                 LOGGER.error("Could not register script based on file {}", scriptf, e);
             }
-
-            /*
-             * if(prop.getActive() && addAlgorithm){ repository.addAlgorithm(wkn); }
-             */
         }
 
         return pChanged;
     }
 
-    /**
-     * This method will insert any config variables (with default values) that should always occur in the wps
-     * config
-     * 
-     * @param repositoryDocument
-     * @param propertyChanged
-     * @param newPropertyList
-     * @param unusedConfigVariables
-     *        Names of all config variables that do NOT occur in the property array
-     * @return
-     */
-    private boolean checkMandatoryParameters(Repository repositoryDocument,
-                                             boolean propertyChanged,
-                                             ArrayList<Property> newPropertyList,
-                                             HashSet<String> unusedConfigVariables) {
-
-        /*
-         * mandatory parameters, the ones from param that have not been covered yet.
-         */
-        // If there was no required parameters given by WPSconfig, host and port
-        // defaults will be added
-        // (RServe_User and RServe_port won't be added)
-        if (unusedConfigVariables.contains(RWPSConfigVariables.RSERVE_HOST.toString().toLowerCase())) {
-            Property host = repositoryDocument.addNewProperty();
-            host.setActive(true);
-            host.setName(RWPSConfigVariables.RSERVE_HOST.toString());
-            host.setStringValue(config.getRServeHost());
-            newPropertyList.add(host);
-            propertyChanged = true;
-        }
-
-        if (unusedConfigVariables.contains(RWPSConfigVariables.RSERVE_PORT.toString().toLowerCase())) {
-            Property port = repositoryDocument.addNewProperty();
-            port.setActive(true);
-            port.setName(RWPSConfigVariables.RSERVE_PORT.toString());
-            port.setStringValue(Integer.toString(config.getRServePort()));
-            newPropertyList.add(port);
-            propertyChanged = true;
-        }
-        return propertyChanged;
-    }
-
-    /**
-     * Retrieves configuration parameter from WPS config
-     * 
-     * @param property
-     * @return true
-     */
-    private boolean handleConfigVariable(Property property) {
+    private boolean readAndStoreConfigVariable(Property property) {
         String pname = property.getName();
-        // RWPSConfigVariables.v
         boolean success = false;
         for (RWPSConfigVariables configvariable : RWPSConfigVariables.values()) {
             if (pname.equalsIgnoreCase(configvariable.toString())) {
-                config.setConfigVariable(configvariable, property.getStringValue());
+                String value = property.getStringValue();
+                config.setConfigVariable(configvariable, value);
                 success = true;
+                LOGGER.trace("Read config variable '{}' with value '{}' from property {}",
+                             configvariable,
+                             value,
+                             property);
                 break;
             }
         }

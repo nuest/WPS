@@ -62,7 +62,7 @@ public class ScriptFileRepo {
 
     private static String scriptFile = "/uniform.R";
 
-    private String expectedWKN = R_Config.WKN_PREFIX + "uniform";
+    private String expectedWKN;
 
     @BeforeClass
     public static void prepare() {
@@ -75,6 +75,7 @@ public class ScriptFileRepo {
     public void prepareRepo() {
         sr = new ScriptFileRepository();
         ReflectionTestUtils.setField(sr, "annotationParser", parser);
+        expectedWKN = config.getPublicScriptId("uniform");
     }
 
     @Test

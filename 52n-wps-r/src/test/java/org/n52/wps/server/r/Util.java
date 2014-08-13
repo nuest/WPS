@@ -51,4 +51,8 @@ public class Util {
         return f;
     }
 
+    public static R_Config getConfig() {
+        return new R_Config();
+    }
+
 }

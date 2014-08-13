@@ -29,11 +29,14 @@
 
 package org.n52.wps.server.r;
 
+import java.beans.PropertyChangeEvent;
 import java.io.File;
+import java.nio.file.Path;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collection;
 import java.util.HashMap;
+import java.util.List;
 import java.util.Map;
 
 import javax.annotation.PostConstruct;
@@ -48,10 +51,13 @@ import org.n52.wps.commons.WPSConfig;
 import org.n52.wps.server.ExceptionReport;
 import org.n52.wps.server.IAlgorithm;
 import org.n52.wps.server.ITransactionalAlgorithmRepository;
-import org.n52.wps.server.r.data.CustomDataTypeManager;
+import org.n52.wps.server.r.data.RDataTypeRegistry;
 import org.n52.wps.server.r.info.RProcessInfo;
 import org.n52.wps.server.r.metadata.RAnnotationParser;
-import org.n52.wps.server.spring.SpringWrapperAlgorithmRepository;
+import org.n52.wps.server.r.syntax.RAnnotation;
+import org.n52.wps.server.r.syntax.RAnnotationException;
+import org.n52.wps.server.r.syntax.RAnnotationType;
+import org.n52.wps.server.spring.AbstractWrapperAlgorithmRepository;
 import org.rosuda.REngine.Rserve.RConnection;
 import org.rosuda.REngine.Rserve.RserveException;
 import org.slf4j.Logger;
@@ -72,8 +78,7 @@ public class LocalRAlgorithmRepository implements ITransactionalAlgorithmReposit
 
     public static final String COMPONENT_NAME = "RAlgorithmRepository";
 
-    // registered processes
-    private Map<String, IAlgorithm> algorithms = new HashMap<String, IAlgorithm>();
+    private Map<String, GenericRProcess> algorithms = new HashMap<String, GenericRProcess>();
 
     @Autowired
     private R_Config config;
@@ -82,14 +87,20 @@ public class LocalRAlgorithmRepository implements ITransactionalAlgorithmReposit
     RPropertyChangeManager changeManager;
 
     @Autowired
-    private ScriptFileRepository repo;
+    private ScriptFileRepository scriptRepo;
 
     @Autowired
     private RAnnotationParser parser;
 
+    @Autowired
+    private ResourceFileRepository resourceRepo;
+
     private Map<String, RProcessInfo> processInfos;
 
     private boolean skipInvalidScripts = true;
+
+    @Autowired
+    private RDataTypeRegistry dataTypeRegistry;
 
     public LocalRAlgorithmRepository() {
         LOGGER.info("NEW {}", this);
@@ -99,13 +110,17 @@ public class LocalRAlgorithmRepository implements ITransactionalAlgorithmReposit
     public void init() {
         LOGGER.info("Initializing Local*R*AlgorithmRepository");
 
-        changeManager.updateRepositoryConfiguration(); // loads config
+        changeManager.propertyChange(new PropertyChangeEvent(this, "init", null, null)); // loads config
 
         boolean startUpConditions = checkStartUpConditions();
         if (startUpConditions) {
             // unregistered scripts from repository folder will be added as algorithm to WPSconfig
 
-            CustomDataTypeManager.getInstance().update();
+            Collection<Path> resourceDirectory = config.getResourceDirectory();
+            for (Path rd : resourceDirectory) {
+                resourceRepo.addResourceDirectory(rd);
+            }
+
             addAllAlgorithmsToRepository();
         }
         else
@@ -126,7 +141,7 @@ public class LocalRAlgorithmRepository implements ITransactionalAlgorithmReposit
         if ( !wpsConfig.isRepositoryActive(className)) {
             LOGGER.debug("Local R Algorithm Repository is inactive.");
             Repository[] registeredAlgorithmRepositories = WPSConfig.getInstance().getRegisterdAlgorithmRepositories();
-            if (SpringWrapperAlgorithmRepository.wrapperRepositoryActiveAndConfiguredForRepo(this,
+            if (AbstractWrapperAlgorithmRepository.wrapperRepositoryActiveAndConfiguredForRepo(this,
                                                                                              registeredAlgorithmRepositories))
                 LOGGER.debug("Ignoring 'inactive' configuration value because a wrapper repo is active!");
             else
@@ -165,7 +180,7 @@ public class LocalRAlgorithmRepository implements ITransactionalAlgorithmReposit
             if (property.getName().equalsIgnoreCase(RWPSConfigVariables.ALGORITHM_PROPERTY_NAME.toString())) {
                 File f = null;
                 try {
-                    f = repo.getScriptFileForWKN(algorithm_wkn);
+                    f = scriptRepo.getScriptFileForWKN(algorithm_wkn);
                 }
                 catch (ExceptionReport e) {
                     LOGGER.error("Could not load file for algorithm {}", algorithm_wkn, e);
@@ -178,7 +193,7 @@ public class LocalRAlgorithmRepository implements ITransactionalAlgorithmReposit
                 continue;
 
             if (property.getActive() && processInfo != null) {
-                if ( !repo.isScriptAvailable(processInfo)) {
+                if ( !scriptRepo.isScriptAvailable(processInfo)) {
                     // property.setActive(false);
                     // propertyChanged=true;
                     LOGGER.error("Missing R script for process '{}'. Process ignored - check WPS configuration.",
@@ -198,6 +213,7 @@ public class LocalRAlgorithmRepository implements ITransactionalAlgorithmReposit
                 }
 
                 addAlgorithm(algorithm_wkn);
+                addResourcesForAlgorithm(algorithm_wkn);
 
                 // //unavailable algorithms get an unavailable suffix in the
                 // properties and will be deactivated
@@ -221,6 +237,29 @@ public class LocalRAlgorithmRepository implements ITransactionalAlgorithmReposit
             }
             else
                 LOGGER.warn("Algorithm not added: active: {} | processInfo: {}", property.getActive(), processInfo);
+        }
+    }
+
+    private void addResourcesForAlgorithm(String algorithm_wkn) {
+        LOGGER.debug("Adding resources for algorithm {}", algorithm_wkn);
+        GenericRProcess process = algorithms.get(algorithm_wkn);
+
+        List<RAnnotation> resourceAnnotations = null;
+        try {
+            resourceAnnotations = RAnnotation.filterAnnotations(process.getAnnotations(), RAnnotationType.RESOURCE);
+        }
+        catch (RAnnotationException e) {
+            LOGGER.error("Could not get resoure annotations for algorithm  {}", algorithm_wkn);
+        }
+        
+        for (RAnnotation rAnnotation : resourceAnnotations) {
+            boolean b = resourceRepo.registerResources(rAnnotation);
+            if (b)
+                LOGGER.debug("Registered resources for algorithm {} based on annotation: {}",
+                             algorithm_wkn,
+                             rAnnotation);
+            else
+                LOGGER.warn("Could not register resources based on annotation {}", rAnnotation);
         }
     }
 
@@ -249,10 +288,15 @@ public class LocalRAlgorithmRepository implements ITransactionalAlgorithmReposit
         return this.algorithms.containsKey(className);
     }
 
-    private IAlgorithm loadAlgorithmAndValidate(String wellKnownName) {
+    private GenericRProcess loadAlgorithmAndValidate(String wellKnownName) {
         LOGGER.debug("Loading algorithm '{}'", wellKnownName);
 
-        IAlgorithm algorithm = new GenericRProcess(wellKnownName, config, parser, repo);
+        GenericRProcess algorithm = new GenericRProcess(wellKnownName,
+                                                        config,
+                                                        parser,
+                                                        scriptRepo,
+                                                        resourceRepo,
+                                                        dataTypeRegistry);
 
         if ( !algorithm.processDescriptionIsValid()) {
             // collect the errors
@@ -291,9 +335,9 @@ public class LocalRAlgorithmRepository implements ITransactionalAlgorithmReposit
             String algorithmName = (String) processID;
 
             try {
-                IAlgorithm a = loadAlgorithmAndValidate(algorithmName);
-                this.algorithms.put(algorithmName, a);
-                LOGGER.info("Algorithm under name '{}' added: {}", algorithmName, a);
+                GenericRProcess p = loadAlgorithmAndValidate(algorithmName);
+                this.algorithms.put(algorithmName, p);
+                LOGGER.info("Algorithm under name '{}' added: {}", algorithmName, p);
 
                 return true;
             }

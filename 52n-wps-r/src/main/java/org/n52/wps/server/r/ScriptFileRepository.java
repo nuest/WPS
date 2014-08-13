@@ -71,32 +71,11 @@ public class ScriptFileRepository {
     @Autowired
     private RAnnotationParser annotationParser;
 
+    @Autowired
+    R_Config config;
+
     public ScriptFileRepository() {
         LOGGER.info("NEW {}", this);
-    }
-
-    /**
-     * Deletes *.R file from repository
-     * 
-     * TODO give this method a purpose i.e. implement functionality to delete process during runtime
-     */
-    private boolean delete(String processName) {
-        boolean deleted = false;
-        // try {
-        // File processFile = config.getScriptFileForWKN(processName);
-        // deleted = processFile.delete();
-        // if ( !deleted)
-        // LOGGER.error("Process file {} could not be deleted, process just removed temporarly",
-        // processFile.getName());
-        // else
-        // LOGGER.info("Process {} and process file {} successfully deleted!", processName,
-        // processFile.getName());
-        // }
-        // catch (RuntimeException | ExceptionReport e) {
-        // LOGGER.error("Process file refering to {} could not be deleted", processName, e);
-        // }
-        return deleted;
-
     }
 
     public File getScriptFileForWKN(String wkn) throws ExceptionReport {
@@ -168,7 +147,7 @@ public class ScriptFileRepository {
         }
     }
 
-    protected boolean registerScript(File file) throws RAnnotationException, ExceptionReport {
+    public boolean registerScript(File file) throws RAnnotationException, ExceptionReport {
         boolean registered = false;
 
         try (FileInputStream fis = new FileInputStream(file);) {
@@ -193,7 +172,7 @@ public class ScriptFileRepository {
                     }
                     else {
                         String process_id = descriptionAnnotation.getStringValue(RAttribute.IDENTIFIER);
-                        String wkn = R_Config.WKN_PREFIX + process_id;
+                        String wkn = config.getPublicScriptId(process_id);
 
                         if (fileToWknMap.containsValue(wkn)) {
                             File conflictFile = getScriptFileForWKN(wkn);
