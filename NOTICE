@@ -115,6 +115,9 @@ This project includes:
   Jackrabbit SPI under The Apache Software License, Version 2.0
   Jackrabbit SPI Commons under The Apache Software License, Version 2.0
   Jackrabbit Text Extractors under The Apache Software License, Version 2.0
+  Jackson-annotations under The Apache Software License, Version 2.0
+  Jackson-core under The Apache Software License, Version 2.0
+  jackson-databind under The Apache Software License, Version 2.0
   jai_codec under Java Advanced Imaging Distribution License, http://download.java.net/media/jai/builds/release/1_1_3/LICENSE-jai.txt
   jai_imageio under Java Advanced Imaging Distribution License, http://download.java.net/media/jai/builds/release/1_1_3/LICENSE-jai.txt
   Java Advanced Imaging under Java Advanced Imaging Distribution License, http://download.java.net/media/jai/builds/release/1_1_3/LICENSE-jai.txt
@@ -124,6 +127,7 @@ This project includes:
   JavaMail 1.4 under The Apache Software License, Version 2.0
   JavaMail API under Common Development and Distribution License (CDDL) v1.0
   JavaServer Pages(TM) API under CDDL + GPLv2 with classpath exception
+  jaxb-api under COMMON DEVELOPMENT AND DISTRIBUTION LICENSE (CDDL) Version 1.0
   jaxen under jaxen license, http://jaxen.codehaus.org/license.html
   JCL 1.1.1 implemented over SLF4J under MIT License
   jcommon under GNU Lesser General Public Licence
@@ -139,6 +143,7 @@ This project includes:
   json-lib under The Apache Software License, Version 2.0
   JSON.simple under The Apache Software License, Version 2.0
   jsr-275 under BSD License
+  jsr173_api under BEA license, http://svn.apache.org/repos/asf/beehive/trunk/LICENSE.jsr173-api
   jstl under GNU GENERAL PUBLIC LICENSE (GPL Version 2, June 1991)
   JTS Topology Suite under Lesser General Public License (LGPL)
   JUL to SLF4J bridge under MIT License
@@ -155,6 +160,7 @@ This project includes:
   mapscript under MapServer License (MIT license)
   mc-xml-processors under GNU GENERAL PUBLIC LICENSE Version 2, June 1991
   Metadata under Lesser General Public License (LGPL)
+  Mockito under The MIT License
   MovingCode-Schema under GNU GENERAL PUBLIC LICENSE Version 2, June 1991
   OGC OWS schema (spec. v1.1.0) under GNU GENERAL PUBLIC LICENSE Version 2, June 1991
   OGC WPS schema (spec. v1.0.0) under GNU GENERAL PUBLIC LICENSE Version 2, June 1991

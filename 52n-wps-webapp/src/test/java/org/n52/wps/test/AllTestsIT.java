@@ -58,6 +58,7 @@ import net.opengis.wps.x100.OutputReferenceType;
 
 import org.apache.commons.codec.binary.Base64;
 import org.geotools.coverage.grid.GridCoverage2D;
+import org.n52.wps.commons.WPSConfig;
 import org.n52.wps.io.data.IData;
 import org.n52.wps.io.datahandler.parser.GeotiffParser;
 import org.w3c.dom.Document;
@@ -83,6 +84,10 @@ public class AllTestsIT {
 
     public static String getURL() {
         return "http://" + getHost() + ":" + getPort() + getContext();
+    }
+
+    public static String getWebappURL() {
+        return "http://" + getHost() + ":" + getPort() + getContext().replace("/" + WPSConfig.WPS_SERVLET_PATH, "");
     }
 
     public static Document parseXML(String xmlString) throws ParserConfigurationException, SAXException, IOException {
