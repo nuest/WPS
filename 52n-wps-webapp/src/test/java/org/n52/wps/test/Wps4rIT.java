@@ -38,7 +38,6 @@ import static org.hamcrest.Matchers.nullValue;
 import java.io.IOException;
 import java.io.StringWriter;
 import java.net.HttpURLConnection;
-import java.net.MalformedURLException;
 import java.net.URL;
 import java.util.Random;
 import java.util.UUID;
@@ -118,24 +117,20 @@ public class Wps4rIT {
         return con;
     }
 
-    /*
-     * DN: test disabled, sessionInfo.jsp was deleted, service endpoint must be implemented.
-     */
-    // @Test
-    public void sessionInfoRetrievedFromWPSWebsite() throws MalformedURLException {
-        String temp = wpsUrl.substring(0, wpsUrl.lastIndexOf("/"));
-        URL urlSessionInfo = new URL(temp + "/rsessioninfoendpoint");
-        try {
-            String response = GetClient.sendRequest(urlSessionInfo.toExternalForm());
-            assertThat(response, containsString("R ")); // "R version" fails if using unstable R!
-            assertThat(response, containsString("Platform:"));
-            assertThat(response, containsString("attached base packages:"));
-        }
-        catch (IOException e) {
-            String message = "Cannot retrieve the R session info from WPS.";
-            e.printStackTrace();
-            throw new AssertionError(message);
-        }
+    @Test
+    public void sessionVariablesAreSet() throws ParserConfigurationException, SAXException, IOException, XmlException {
+        URL resource = Wps4rIT.class.getResource("/R/ExecuteTestSessionVariables.xml");
+        XmlObject xmlPayload = XmlObject.Factory.parse(resource);
+
+        String payload = xmlPayload.toString();
+        String response = PostClient.sendRequest(wpsUrl, payload);
+
+        assertThat(AllTestsIT.parseXML(response), is(not(nullValue())));
+        assertThat("response is not an exception", response, not(containsString("ExceptionReport")));
+        assertThat(response, containsString("<ows:Identifier>scripturl</ows:Identifier>"));
+        assertThat(response, containsString("<wps:ProcessSucceeded>Process successful</wps:ProcessSucceeded>"));
+        assertThat(response, containsString("<ows:Identifier>scripturl</ows:Identifier>"));
+        assertThat(response, containsString("<ows:Identifier>scripturl</ows:Identifier>"));
     }
 
     @Test
