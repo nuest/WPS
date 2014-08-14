@@ -34,6 +34,7 @@ import static org.hamcrest.Matchers.equalTo;
 import static org.junit.Assert.assertNotNull;
 import static org.junit.Assert.assertSame;
 import static org.junit.Assert.assertThat;
+import static org.junit.Assert.assertTrue;
 
 import java.io.File;
 import java.io.IOException;
@@ -43,9 +44,12 @@ import org.junit.Before;
 import org.junit.BeforeClass;
 import org.junit.Test;
 import org.n52.wps.server.ExceptionReport;
+import org.n52.wps.server.r.info.RProcessInfo;
 import org.n52.wps.server.r.metadata.RAnnotationParser;
 import org.n52.wps.server.r.syntax.RAnnotationException;
 import org.springframework.test.util.ReflectionTestUtils;
+
+import com.google.common.io.Files;
 
 /**
  * 
@@ -75,7 +79,20 @@ public class ScriptFileRepo {
     public void prepareRepo() {
         sr = new ScriptFileRepository();
         ReflectionTestUtils.setField(sr, "annotationParser", parser);
+        ReflectionTestUtils.setField(sr, "config", config);
         expectedWKN = config.getPublicScriptId("uniform");
+    }
+
+    public String prepareMissingScriptFile() throws IOException, RAnnotationException, ExceptionReport {
+        File temp = File.createTempFile("wps4rIT_", ".R");
+        Files.copy(Util.loadFile(scriptFile), temp);
+
+        boolean b = sr.registerScript(temp);
+        String missingWkn = sr.getWKNForScriptFile(temp);
+        assertTrue(b);
+        boolean delete = temp.delete();
+        assertTrue(delete);
+        return missingWkn;
     }
 
     @Test
@@ -89,6 +106,15 @@ public class ScriptFileRepo {
         assertNotNull(wkn);
         File file = sr.getScriptFileForWKN(wkn);
         assertSame(f.toString(), file.toString());
+        assertTrue(sr.isScriptAvailable(wkn));
+        RProcessInfo info = new RProcessInfo(wkn, null, null);
+        assertTrue(sr.isScriptAvailable(info));
+    }
+
+    @Test
+    public void registrationReturnValue() throws URISyntaxException, RAnnotationException, ExceptionReport, IOException {
+        File f = Util.loadFile(scriptFile);
+        assertThat("registration method response is true", sr.registerScript(f), is(equalTo(true)));
     }
 
     @Test
@@ -96,6 +122,32 @@ public class ScriptFileRepo {
         File f = Util.loadFile(scriptFile);
         sr.registerScript(f);
         assertThat("script wkn is correct", sr.getWKNForScriptFile(f), is(equalTo(expectedWKN)));
+    }
+
+    @Test
+    public void doubleRegistration() throws URISyntaxException, RAnnotationException, ExceptionReport, IOException {
+        File f = Util.loadFile(scriptFile);
+        assertThat("first register call returns true", sr.registerScript(f), is(equalTo(true)));
+        assertThat("second register call returns false", sr.registerScript(f), is(equalTo(false)));
+    }
+
+    @Test
+    public void scriptIsNotAvailableAWhenFileMissing() throws IOException, RAnnotationException, ExceptionReport {
+        String missingWkn = prepareMissingScriptFile();
+        boolean wknAvailable = sr.isScriptAvailable(missingWkn);
+        boolean infoAvailable = sr.isScriptAvailable(new RProcessInfo(missingWkn, null, null));
+        assertThat("missing script file: script is not available when asking with wkn",
+                   wknAvailable,
+                   is(equalTo(false)));
+        assertThat("missing script file: script is not available when asking with process info",
+                   infoAvailable,
+                   is(equalTo(false)));
+    }
+
+    @Test
+    public void scriptIsInvalidWhenFileMissing() throws IOException, RAnnotationException, ExceptionReport {
+        boolean valid = sr.isScriptValid(prepareMissingScriptFile());
+        assertThat("dmissing script file: script is invalid", valid, is(equalTo(false)));
     }
 
 }

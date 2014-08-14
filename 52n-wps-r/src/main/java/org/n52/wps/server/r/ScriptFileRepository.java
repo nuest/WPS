@@ -118,12 +118,8 @@ public class ScriptFileRepository {
     }
 
     public boolean isScriptValid(String wkn) {
-        FileInputStream fis = null;
+        try (FileInputStream fis = new FileInputStream(getScriptFileForWKN(wkn));) {
 
-        try {
-            File file = getScriptFileForWKN(wkn);
-            // RAnnotationParser parser = new RAnnotationParser();
-            fis = new FileInputStream(file);
             boolean valid = annotationParser.validateScript(fis, wkn);
 
             return valid;
@@ -135,15 +131,6 @@ public class ScriptFileRepository {
         catch (RuntimeException | ExceptionReport | RAnnotationException e) {
             LOGGER.error("Validation of process " + wkn + " failed.", e);
             return false;
-        }
-        finally {
-            if (fis != null)
-                try {
-                    fis.close();
-                }
-                catch (IOException e) {
-                    LOGGER.error("Could not flose file input.", e);
-                }
         }
     }
 
