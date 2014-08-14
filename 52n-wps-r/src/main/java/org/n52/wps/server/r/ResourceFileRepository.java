@@ -35,6 +35,7 @@ import java.nio.file.Paths;
 import java.util.Arrays;
 import java.util.Collection;
 import java.util.HashSet;
+import java.util.Iterator;
 import java.util.Map;
 import java.util.Set;
 
@@ -100,15 +101,34 @@ public class ResourceFileRepository {
                      Arrays.toString(resourceDirectories.toArray()));
     }
 
-    public Collection<R_Resource> getR_Resourcce(Path path) throws ExceptionReport {
-        if ( !Files.exists(path))
+    /**
+     * @return all @R_Resource that reference the file under the given path
+     */
+    public Collection<R_Resource> getReferencingResources(Path path) throws ExceptionReport {
+        Path p = path;
+        if ( !p.isAbsolute()) {
+            // see if resource is contained in one of the directories
+            for (Path resourceDirs : resourceDirectories) {
+                Path fullPath = resourceDirs.resolve(p);
+
+                if (Files.exists(fullPath)) {
+                    p = fullPath;
+                    break;
+                }
+            }
+        }
+
+        if ( !Files.exists(p))
             throw new ExceptionReport("Resource file not found: " + path, ExceptionReport.NO_APPLICABLE_CODE);
 
         ListMultimap<Path, R_Resource> inverse = Multimaps.invertFrom(Multimaps.forMap(resourcePaths),
                                                                       ArrayListMultimap.<Path, R_Resource> create());
-        return inverse.get(path);
+        return inverse.get(p);
     }
 
+    /**
+     * @return the full path to the given resource
+     */
     public Path getResource(R_Resource resource) throws ExceptionReport {
         Path out = resourcePaths.get(resource);
         if (out != null && Files.exists(out) && out.isAbsolute() && out.toFile().canRead()) {
@@ -168,20 +188,28 @@ public class ResourceFileRepository {
                              res,
                              Arrays.toString(resourceDirectories.toArray()));
 
-                // see if resource is contained in one of the directories
+                boolean foundResource = false;
                 Path resourcePath = Paths.get(res.getResourceValue());
 
-                boolean foundResourceInDir = false;
-                for (Path resourceDirs : resourceDirectories) {
-                    Path fullPath = resourceDirs.resolve(resourcePath);
-
-                    if (Files.exists(fullPath)) {
-                        foundResourceInDir = addResource(res, resourceDirs, fullPath);
+                // if resource path is absolute, just store it
+                if (resourcePath.isAbsolute()) {
+                    if (Files.exists(resourcePath)) {
+                        foundResource = addResource(res, null, resourcePath);
                         break;
                     }
                 }
 
-                if ( !foundResourceInDir) {
+                // see if resource is contained in one of the directories
+                for (Path resourceDirs : resourceDirectories) {
+                    Path fullPath = resourceDirs.resolve(resourcePath);
+
+                    if (Files.exists(fullPath)) {
+                        foundResource = addResource(res, resourceDirs, fullPath);
+                        break;
+                    }
+                }
+
+                if ( !foundResource) {
                     LOGGER.warn("Could not find resource {} in any of the configuredd directories: {}",
                                 res,
                                 resourceDirectories);
@@ -198,6 +226,31 @@ public class ResourceFileRepository {
 
         this.resourceDirectories.clear();
         this.resourcePaths.clear();
+    }
+
+    @Override
+    public String toString() {
+        final int maxLen = 7;
+        StringBuilder builder = new StringBuilder();
+        builder.append("ResourceFileRepository [processToResourcesMap=").append(processToResourcesMap);
+        builder.append(", resourceDirectories=").append(resourceDirectories != null ? toString(resourceDirectories,
+                                                                                               maxLen) : null);
+        builder.append(", resourcePaths=").append(resourcePaths != null ? toString(resourcePaths.entrySet(), maxLen)
+                                                                       : null).append("]");
+        return builder.toString();
+    }
+
+    private String toString(Collection< ? > collection, int maxLen) {
+        StringBuilder builder = new StringBuilder();
+        builder.append("[");
+        int i = 0;
+        for (Iterator< ? > iterator = collection.iterator(); iterator.hasNext() && i < maxLen; i++) {
+            if (i > 0)
+                builder.append(", ");
+            builder.append(iterator.next());
+        }
+        builder.append("]");
+        return builder.toString();
     }
 
 }
