@@ -57,4 +57,11 @@ public class LiteralAnyURIBinding extends AbstractLiteralDataBinding {
         } catch (URISyntaxException ex) { }
 	}
 
+    @Override
+    public String toString() {
+        StringBuilder builder = new StringBuilder();
+        builder.append("LiteralAnyURIBinding [uri=").append(uri).append("]");
+        return builder.toString();
+    }
+
 }

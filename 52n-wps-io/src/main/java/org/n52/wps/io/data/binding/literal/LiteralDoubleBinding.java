@@ -46,4 +46,11 @@ public class LiteralDoubleBinding extends AbstractLiteralDataBinding {
 	{
 		payload = new Double((String) oos.readObject());
 	}
+
+    @Override
+    public String toString() {
+        StringBuilder builder = new StringBuilder();
+        builder.append("LiteralDoubleBinding [payload=").append(payload).append("]");
+        return builder.toString();
+    }
 }

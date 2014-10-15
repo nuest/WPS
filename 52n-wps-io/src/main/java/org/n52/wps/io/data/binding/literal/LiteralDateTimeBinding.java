@@ -64,4 +64,11 @@ public class LiteralDateTimeBinding extends AbstractLiteralDataBinding {
 		date = new Date( ((Long) oos.readObject()).longValue() );
 	}
 
+    @Override
+    public String toString() {
+        StringBuilder builder = new StringBuilder();
+        builder.append("LiteralDateTimeBinding [date=").append(date).append("]");
+        return builder.toString();
+    }
+
 }

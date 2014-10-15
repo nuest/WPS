@@ -17,6 +17,7 @@
 package org.n52.wps.io.data.binding.literal;
 
 import java.io.IOException;
+import java.util.Arrays;
 
 public class LiteralBase64BinaryBinding extends AbstractLiteralDataBinding {
 	/**
@@ -52,4 +53,11 @@ public class LiteralBase64BinaryBinding extends AbstractLiteralDataBinding {
 	{
 		binary = ((String) oos.readObject()).getBytes();
 	}
+
+    @Override
+    public String toString() {
+        StringBuilder builder = new StringBuilder();
+        builder.append("LiteralBase64BinaryBinding [binary=").append(Arrays.toString(binary)).append("]");
+        return builder.toString();
+    }
 }

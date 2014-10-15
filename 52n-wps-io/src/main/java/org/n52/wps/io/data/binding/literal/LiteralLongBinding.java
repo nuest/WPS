@@ -46,4 +46,11 @@ public class LiteralLongBinding extends AbstractLiteralDataBinding {
 	{
 		payload = new Long((String) oos.readObject());
 	}
+
+    @Override
+    public String toString() {
+        StringBuilder builder = new StringBuilder();
+        builder.append("LiteralLongBinding [payload=").append(payload).append("]");
+        return builder.toString();
+    }
 }

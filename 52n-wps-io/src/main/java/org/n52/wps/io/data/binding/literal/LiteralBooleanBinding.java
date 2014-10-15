@@ -47,4 +47,11 @@ public class LiteralBooleanBinding extends AbstractLiteralDataBinding {
 		payload = Boolean.parseBoolean((String) oos.readObject());
 	}
 
+    @Override
+    public String toString() {
+        StringBuilder builder = new StringBuilder();
+        builder.append("LiteralBooleanBinding [payload=").append(payload).append("]");
+        return builder.toString();
+    }
+
 }

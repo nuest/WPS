@@ -46,4 +46,12 @@ public class LiteralFloatBinding extends AbstractLiteralDataBinding {
 	{
 		payload = new Float((String) oos.readObject());
 	}
+
+    @Override
+    public String toString() {
+        StringBuilder builder = new StringBuilder();
+        builder.append("LiteralFloatBinding [payload=").append(payload).append("]");
+        return builder.toString();
+    }
+
 }

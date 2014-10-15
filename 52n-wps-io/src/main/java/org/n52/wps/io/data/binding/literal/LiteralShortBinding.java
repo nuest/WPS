@@ -46,4 +46,11 @@ public class LiteralShortBinding extends AbstractLiteralDataBinding {
 	{
 		payload = new Short((String) oos.readObject());
 	}
+
+    @Override
+    public String toString() {
+        StringBuilder builder = new StringBuilder();
+        builder.append("LiteralShortBinding [payload=").append(payload).append("]");
+        return builder.toString();
+    }
 }
