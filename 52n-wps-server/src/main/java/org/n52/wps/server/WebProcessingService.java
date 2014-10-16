@@ -40,7 +40,6 @@ import java.io.StringWriter;
 import java.net.URLDecoder;
 import java.util.zip.GZIPOutputStream;
 
-import javax.servlet.ServletConfig;
 import javax.servlet.ServletContext;
 import javax.servlet.ServletException;
 import javax.servlet.http.HttpServletRequest;
@@ -64,7 +63,6 @@ import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestMethod;
-import org.springframework.web.context.ServletConfigAware;
 import org.springframework.web.context.ServletContextAware;
 
 /**
@@ -74,7 +72,7 @@ import org.springframework.web.context.ServletContextAware;
  *
  */
 @RequestMapping("/" + WPSConfig.SERVLET_PATH)
-public class WebProcessingService implements ServletContextAware, ServletConfigAware{
+public class WebProcessingService implements ServletContextAware {
 
     private static final String SPECIAL_XML_POST_VARIABLE = "request";
 
@@ -94,7 +92,6 @@ public class WebProcessingService implements ServletContextAware, ServletConfigA
 
     private static String applicationBaseDir = null;
 
-    private ServletConfig servletConfig;
     private ServletContext servletContext;
 
 	@Autowired
@@ -396,11 +393,6 @@ public class WebProcessingService implements ServletContextAware, ServletConfigA
         super.finalize();
         DatabaseFactory.getDatabase().shutdown();
     }
-
-	@Override
-	public void setServletConfig(ServletConfig servletConfig) {
-		this.servletConfig = servletConfig;		
-	}
 
 	@Override
 	public void setServletContext(ServletContext servletContext) {
