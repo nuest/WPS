@@ -47,8 +47,6 @@ import java.util.zip.GZIPInputStream;
 import java.util.zip.GZIPOutputStream;
 
 import org.apache.commons.io.IOUtils;
-import org.n52.wps.DatabaseDocument.Database;
-import org.n52.wps.ServerDocument.Server;
 import org.n52.wps.commons.MIMEUtil;
 import org.n52.wps.commons.PropertyUtil;
 import org.n52.wps.commons.WPSConfig;
@@ -124,12 +122,7 @@ public final class FlatFileDatabase implements IDatabase {
 
     protected FlatFileDatabase() {
         
-        Server server = WPSConfig.getInstance().getWPSConfig().getServer();
-        Database database = server.getDatabase();
-        PropertyUtil propertyUtil = new PropertyUtil(database.getPropertyArray(), KEY_DATABASE_ROOT);
-        
         // NOTE: The hostname and port are hard coded as part of the 52n framework design/implementation.
-        baseResultURL = String.format(server.getProtocol() + "://%s:%s/%s/RetrieveResultServlet?id=",
                 server.getHostname(), server.getHostport(), server.getWebappPath());
         LOGGER.info("Using \"{}\" as base URL for results", baseResultURL);
         
@@ -387,6 +380,10 @@ public final class FlatFileDatabase implements IDatabase {
                 // In order to allow the prior response to be available we write
                 // to a temp file and rename these when completed. Large responses
                 // can cause the call below to take a significant amount of time.
+                LOGGER.debug("Copying XML from {} to {} ({})",
+                             responseInputStream,
+                             responseOutputStream,
+                             responseTempFile);
                 XMLUtil.copyXML(responseInputStream, responseOutputStream, indentXML);
             }
             finally {
@@ -403,9 +400,11 @@ public final class FlatFileDatabase implements IDatabase {
 
         }
         catch (FileNotFoundException e) {
+            LOGGER.error("Error storing response", e);
             throw new RuntimeException("Error storing response for " + id, e);
         }
         catch (IOException e) {
+            LOGGER.error("Error storing response", e);
             throw new RuntimeException("Error storing response for " + id, e);
         }
     }
