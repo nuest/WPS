@@ -26,6 +26,7 @@
  * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the GNU General
  * Public License for more details.
  */
+
 package org.n52.wps.server.database;
 
 import java.io.BufferedOutputStream;
@@ -47,6 +48,8 @@ import java.util.zip.GZIPInputStream;
 import java.util.zip.GZIPOutputStream;
 
 import org.apache.commons.io.IOUtils;
+import org.n52.wps.DatabaseDocument.Database;
+import org.n52.wps.ServerDocument.Server;
 import org.n52.wps.commons.MIMEUtil;
 import org.n52.wps.commons.PropertyUtil;
 import org.n52.wps.commons.WPSConfig;
@@ -70,17 +73,16 @@ public final class FlatFileDatabase implements IDatabase {
     private final static String KEY_DATABASE_WIPE_PERIOD = "wipe.period";
     private final static String KEY_DATABASE_WIPE_THRESHOLD = "wipe.threshold";
     private final static String KEY_DATABASE_COMPLEX_GZIP = "complex.gzip";
-    
-    private final static String DEFAULT_DATABASE_PATH = 
-            Joiner.on(File.separator).join(
-                System.getProperty("java.io.tmpdir", "."),
-                "Database",
-                "Results");
+
+    private final static String DEFAULT_DATABASE_PATH = Joiner.on(File.separator).join(System.getProperty("java.io.tmpdir",
+                                                                                                          "."),
+                                                                                       "Database",
+                                                                                       "Results");
     private final static boolean DEFAULT_DATABASE_WIPE_ENABLED = true;
-    private final static long DEFAULT_DATABASE_WIPE_PERIOD = 1000 * 60 * 60;  // P1H
+    private final static long DEFAULT_DATABASE_WIPE_PERIOD = 1000 * 60 * 60; // P1H
     private final static long DEFAULT_DATABASE_WIPE_THRESHOLD = 1000 * 60 * 60 * 24 * 7; // P7D
     private final static boolean DEFAULT_DATABASE_COMPLEX_GZIP = true; // P7D
-    
+
     private final static String SUFFIX_MIMETYPE = "mime-type";
     private final static String SUFFIX_CONTENT_LENGTH = "content-length";
     private final static String SUFFIX_XML = "xml";
@@ -121,11 +123,17 @@ public final class FlatFileDatabase implements IDatabase {
     protected final Timer wipeTimer;
 
     protected FlatFileDatabase() {
-        
+        Server server = WPSConfig.getInstance().getWPSConfig().getServer();
+        Database database = server.getDatabase();
+        PropertyUtil propertyUtil = new PropertyUtil(database.getPropertyArray(), KEY_DATABASE_ROOT);
+
         // NOTE: The hostname and port are hard coded as part of the 52n framework design/implementation.
-                server.getHostname(), server.getHostport(), server.getWebappPath());
+        baseResultURL = String.format(server.getProtocol() + "://%s:%s/%s/RetrieveResultServlet?id=",
+                                      server.getHostname(),
+                                      server.getHostport(),
+                                      server.getWebappPath());
         LOGGER.info("Using \"{}\" as base URL for results", baseResultURL);
-        
+
         String baseDirectoryPath = propertyUtil.extractString(KEY_DATABASE_PATH, DEFAULT_DATABASE_PATH);
         baseDirectory = new File(baseDirectoryPath);
         LOGGER.info("Using \"{}\" as base directory for results database", baseDirectoryPath);
@@ -135,15 +143,19 @@ public final class FlatFileDatabase implements IDatabase {
         }
 
         if (propertyUtil.extractBoolean(KEY_DATABASE_WIPE_ENABLED, DEFAULT_DATABASE_WIPE_ENABLED)) {
-            
-            long periodMillis = propertyUtil.extractPeriodAsMillis(KEY_DATABASE_WIPE_PERIOD, DEFAULT_DATABASE_WIPE_PERIOD);
-            long thresholdMillis = propertyUtil.extractPeriodAsMillis(KEY_DATABASE_WIPE_THRESHOLD, DEFAULT_DATABASE_WIPE_THRESHOLD);
+
+            long periodMillis = propertyUtil.extractPeriodAsMillis(KEY_DATABASE_WIPE_PERIOD,
+                                                                   DEFAULT_DATABASE_WIPE_PERIOD);
+            long thresholdMillis = propertyUtil.extractPeriodAsMillis(KEY_DATABASE_WIPE_THRESHOLD,
+                                                                      DEFAULT_DATABASE_WIPE_THRESHOLD);
 
             wipeTimer = new Timer(getClass().getSimpleName() + " File Wiper", true);
             wipeTimer.scheduleAtFixedRate(new FlatFileDatabase.WipeTimerTask(thresholdMillis), 0, periodMillis);
-            LOGGER.info("Started {} file wiper timer; period {} ms, threshold {} ms",
-                    new Object[] {getDatabaseName(),periodMillis,thresholdMillis});
-        } else {
+            LOGGER.info("Started {} file wiper timer; period {} ms, threshold {} ms", new Object[] {getDatabaseName(),
+                                                                                                    periodMillis,
+                                                                                                    thresholdMillis});
+        }
+        else {
             wipeTimer = null;
         }
 
@@ -170,20 +182,16 @@ public final class FlatFileDatabase implements IDatabase {
         BufferedOutputStream outputStream = null;
         try {
             if (xml) {
-                outputStream = new BufferedOutputStream(
-                        new FileOutputStream(
-                            new File(
-                                responseDirectory,
-                                JOINER.join("request", SUFFIX_XML)),
-                        false));
+                outputStream = new BufferedOutputStream(new FileOutputStream(new File(responseDirectory,
+                                                                                      JOINER.join("request", SUFFIX_XML)),
+                                                                             false));
                 XMLUtil.copyXML(inputStream, outputStream, indentXML);
-            } else {
-                outputStream = new BufferedOutputStream(
-                        new FileOutputStream(
-                            new File(
-                                responseDirectory,
-                                JOINER.join("request", SUFFIX_PROPERTIES)),
-                        false));
+            }
+            else {
+                outputStream = new BufferedOutputStream(new FileOutputStream(new File(responseDirectory,
+                                                                                      JOINER.join("request",
+                                                                                                  SUFFIX_PROPERTIES)),
+                                                                             false));
                 IOUtils.copy(inputStream, outputStream);
             }
         }
@@ -561,8 +569,10 @@ public final class FlatFileDatabase implements IDatabase {
                         }
                     }
                 }
-            } else {
-                LOGGER.warn("Cannot delete files, no files in root directory {}  > file list is null. ", rootFile.getAbsolutePath());
+            }
+            else {
+                LOGGER.warn("Cannot delete files, no files in root directory {}  > file list is null. ",
+                            rootFile.getAbsolutePath());
             }
         }
 
