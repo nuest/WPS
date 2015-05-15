@@ -1,5 +1,5 @@
 /**
- * ﻿Copyright (C) 2012 - 2014 52°North Initiative for Geospatial Open Source
+ * ﻿Copyright (C) 2009 - 2014 52°North Initiative for Geospatial Open Source
  * Software GmbH
  *
  * This program is free software; you can redistribute it and/or modify it
@@ -26,33 +26,55 @@
  * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the GNU General
  * Public License for more details.
  */
-package org.n52.wps.server.feed.movingcode;
+package org.n52.wps.ags.algorithmpackage;
 
-import java.net.URI;
+import java.util.LinkedList;
 
 /**
  * @author Matthias Mueller, TU Dresden
  *
  */
-public class AlgorithmURL {
+public class CommandLineParameter {
 
-	private final URI uri;
-	private static final String SCHEME = "algorithm";
+	private String prefix;
+	private String suffix;
+	private String separator;
 
-	public AlgorithmURL (String str){
-		uri = URI.create(str);
+	private LinkedList<String> values;
+
+	public CommandLineParameter (String prefixString, String suffixString, String separatorString){
+		prefix = prefixString;
+		suffix = suffixString;
+		separator = separatorString;
+
+		values = new LinkedList<String>();
+
 	}
 
-	public boolean isValid(){
-		return uri.getScheme().equalsIgnoreCase(SCHEME);
+	public void addValue(String value){
+		values.add(value);
 	}
 
-	public String getPublicPath(){
-		return uri.getPath();
+	public String getAsCommandString(){
+		String str = prefix;
+
+		boolean firstrun = true;
+		for (String currentValue : values){
+			if (!firstrun){
+				str = str + separator + currentValue;
+			} else {
+				str = str + currentValue;
+				firstrun = false;
+			}
+		}
+
+		str = str + suffix;
+		return str;
 	}
 
-	public String getPrivatePath(){
-		return uri.getQuery();
+	public String getAsPlainString(){
+		return values.get(0);
 	}
+
 
 }
